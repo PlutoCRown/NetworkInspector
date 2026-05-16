@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { createEmptyRule } from "@/shared/rule/create-empty";
 import { normalizeRuleGroup } from "@/shared/rule/normalize";
 import type { AppConfig, Rule, RuleGroup } from "@/shared/types";
-import { GroupMetaSection } from "./form/GroupMetaSection";
-import { RuleBlockSection } from "./form/RuleBlockSection";
+import { GroupMetaSection } from "../form/GroupMetaSection";
+import { RuleBlockSection } from "../form/RuleBlockSection";
 
 interface RuleGroupFormProps {
   group: RuleGroup;

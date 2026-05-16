@@ -2,32 +2,36 @@
 
 ## 规则组与提取
 
-- [ ] 默认 Demo 规则组（A1.art、DOUYIN）加载并捕获
-- [ ] 字段表达式 `[source:json]event` 正确取值
-- [ ] 聚合 `splits` + `[aggregate:item]name` 多条卡片
+- [ ] 默认配置（`presets/example.json`）中 A1.art、抖音规则组可加载并捕获
+- [ ] `[source:json]` 从 **request body** 取值；`[source:response]` 从响应取值
+- [ ] `splits` + `[aggregate:item]` 多条卡片；拆分源为对象时单条卡片
 - [ ] 固定文本字段原样展示
-- [ ] `[processor:time]`、`[alias:mapkey]` 生效
+- [ ] `[processor:time]`、`[processor:JSONParser]`、`[alias:mapkey]` 生效
 
 ## 后处理
 
-- [ ] 示例 events-api：`page_view` 别名、debug 丢弃
-- [ ] 示例 beacon-api：`expand` 去掉 `_internal`
+- [ ] 规则级 `alias` 替换 title
+- [ ] `filter`：`drop` 丢弃、`strip` 删除对象键
 
 ## 侧边栏
 
-- [ ] card：悬停 popover、点击展开 expand
+- [ ] card：`expand` 点击展开；无 popover
 - [ ] divider 仅 title
-- [ ] 角标为捕获条数
+- [ ] 角标为可见捕获条数；暂停后不再新增
 
 ## 编辑器
 
-- [ ] 四级菜单与规则组二级列表
+- [ ] 侧栏：规则组 / 处理器 / 别名 / About，二级列表与新建
 - [ ] About 全量导出/导入与勾选弹窗
-- [ ] 导入规则组时缺失 Processor/Alias 警告
-- [ ] 左侧固定、右侧滚动
+- [ ] 字段输入 `/` 补全；编辑过程不易被回写清空
+- [ ] Processor 非法函数体：红框 + 保存拦截
 
 ## 导入导出
 
-- [ ] 单规则组 JSON 导入
+- [ ] 单规则组 JSON 导入导出
 - [ ] 全量 JSON 选择性导入
-- [ ] 导出包含 ruleGroups + config
+- [ ] 导出包含 `ruleGroups` + `config`
+
+## 构建
+
+- [ ] `bun run build`、`bun run test`、`bun run typecheck` 通过

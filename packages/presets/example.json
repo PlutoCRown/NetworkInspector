@@ -12,8 +12,6 @@
       "name": "A1.art 埋点捕获",
       "rules": [
         {
-          "aggregate": true,
-          "aggregateFrom": "json:",
           "fields": {
             "desc": "[aggregate:item]distinct_id",
             "expand": "[aggregate:item]properties",
@@ -41,7 +39,6 @@
       "name": "抖音测试用",
       "rules": [
         {
-          "aggregate": true,
           "fields": {
             "desc": "[aggregate:item]session_id",
             "expand": "[aggregate:item]params[processor:JSONParser]",

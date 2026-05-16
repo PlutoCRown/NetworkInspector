@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RowIconButton } from "@/components/ui/preset-buttons";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -128,16 +129,9 @@ function AliasMapGroupCard({ mapkey, group, onUpdate, onRemove }: AliasMapGroupC
             引用 <code className="font-mono text-foreground">[alias:{mapkey}]</code>
           </p>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 shrink-0"
-          onClick={onRemove}
-          aria-label="删除 Alias 组"
-        >
+        <RowIconButton onClick={onRemove} aria-label="删除 Alias 组">
           <Trash2 className="h-4 w-4" />
-        </Button>
+        </RowIconButton>
       </div>
 
       <div className="space-y-2">
@@ -183,17 +177,13 @@ function AliasMapGroupCard({ mapkey, group, onUpdate, onRemove }: AliasMapGroupC
                   placeholder="展示文案"
                   onChange={(e) => updateRow(row.id, { replace: e.target.value })}
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
+                <RowIconButton
                   disabled={rows.length <= 1 && !row.match.trim()}
                   onClick={() => removeRow(row.id)}
                   aria-label="删除映射"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                </RowIconButton>
               </li>
             ))}
             <li>

@@ -10,7 +10,6 @@
     "test": "bun test ./src/shared"
   },
   "dependencies": {
-    "@network-inspector/presets": "workspace:*",
     "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.2",
     "@radix-ui/react-switch": "^1.1.3",

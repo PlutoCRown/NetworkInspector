@@ -1,4 +1,4 @@
-import { DEFAULT_RULE_GROUPS } from "@network-inspector/presets";
+import { DEFAULT_RULE_GROUPS } from "../defaults";
 import { normalizeRuleGroup } from "../rule/normalize";
 import {
   DEFAULT_APP_CONFIG,

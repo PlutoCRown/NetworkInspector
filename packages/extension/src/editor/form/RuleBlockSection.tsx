@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { FieldRefInput } from "@/components/FieldRefInput";
 import { Button } from "@/components/ui/button";
+import { RowIconButton } from "@/components/ui/preset-buttons";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -71,17 +72,9 @@ export function RuleBlockSection({
     <section className="space-y-3 rounded-lg border p-4">
       <div className="flex items-start justify-between gap-2">
         <h2 className="font-medium">规则 {index + 1}</h2>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 shrink-0"
-          disabled={!canRemove}
-          onClick={onRemove}
-          aria-label="删除规则"
-        >
+        <RowIconButton disabled={!canRemove} onClick={onRemove} aria-label="删除规则">
           <Trash2 className="h-4 w-4" />
-        </Button>
+        </RowIconButton>
       </div>
 
       <div>

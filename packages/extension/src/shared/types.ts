@@ -6,9 +6,10 @@ export type {
   RendererId,
   Rule,
   RuleGroup,
-} from "@network-inspector/presets";
+} from "./types/rule";
 
-import type { RuleGroup } from "@network-inspector/presets";
+import type { RuleGroup } from "./types/rule";
+import { DEFAULT_ALIAS_MAPS } from "./defaults";
 import { EXAMPLE_PROCESSORS } from "./field/processor-examples";
 
 export interface CaptureRecord {
@@ -51,7 +52,7 @@ export interface AppConfig {
 }
 
 export const DEFAULT_APP_CONFIG: AppConfig = {
-  aliasMaps: {},
+  aliasMaps: { ...DEFAULT_ALIAS_MAPS },
   customProcessors: { ...EXAMPLE_PROCESSORS },
 };
 

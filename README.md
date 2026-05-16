@@ -14,8 +14,8 @@ bun run dev
 ## 包结构
 
 - `packages/extension` — Chrome MV3 扩展（React + Vite + shadcn 风格 UI）
-- `docs/PRD` — 产品需求文档
-- `rule-group.schema.example.json` — 规则组配置示例
+- `packages/presets` — 默认配置（`example.json`）、Renderer 定义
+- `docs/PRD` — 产品需求文档（见 [docs/PRD/README.md](docs/PRD/README.md)）
 
 ## 测试
 

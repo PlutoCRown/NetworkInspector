@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RowIconButton } from "@/components/ui/preset-buttons";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -74,16 +75,9 @@ export function ProcessorSection({
       <div className="space-y-3 rounded-lg border p-4">
         <div className="flex items-center justify-between gap-2">
           <Label className="text-[10px] text-muted-foreground">ID</Label>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            onClick={() => onRemove(processorId)}
-            aria-label="删除处理器"
-          >
+          <RowIconButton onClick={() => onRemove(processorId)} aria-label="删除处理器">
             <Trash2 className="size-4" />
-          </Button>
+          </RowIconButton>
         </div>
         <Input
           className={cn("font-mono text-xs", idInvalid && invalidFieldClass)}

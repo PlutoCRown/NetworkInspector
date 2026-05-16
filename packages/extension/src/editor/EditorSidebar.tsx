@@ -1,11 +1,11 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { ChevronDown, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { APP_NAME } from "@/shared/app/meta";
 import { EXAMPLE_PROCESSORS } from "@/shared/field/processor-examples";
 import type { AppConfig, RuleGroup } from "@/shared/types";
 import { cn } from "@/lib/utils";
+import { SidebarSubList } from "./sidebar/SidebarSubList";
+import { SubListItem } from "./sidebar/SubListItem";
 
 export type EditorNavSection = "rule-groups" | "processors" | "alias" | "about";
 
@@ -44,70 +44,6 @@ function expandedForSection(section: EditorNavSection): Record<ExpandableSection
   };
 }
 
-interface SidebarSubListProps {
-  open: boolean;
-  emptyLabel?: string;
-  newLabel: string;
-  onNew: () => void;
-  children: ReactNode;
-}
-
-function SidebarSubList({ open, emptyLabel = "暂无", newLabel, onNew, children }: SidebarSubListProps) {
-  return (
-    <CollapsiblePanel open={open} className="ml-2 border-l border-border/60 pl-1">
-      <ul className="max-h-[min(280px,40vh)] space-y-0.5 overflow-y-auto py-1">{children}</ul>
-      <div className="border-t border-border/60 p-1.5">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 w-full justify-start px-2 text-xs"
-          onClick={onNew}
-        >
-          <Plus className="size-3.5" />
-          {newLabel}
-        </Button>
-      </div>
-    </CollapsiblePanel>
-  );
-}
-
-function SubListItem({
-  active,
-  onClick,
-  primary,
-  secondary,
-  leading,
-}: {
-  active: boolean;
-  onClick: () => void;
-  primary: string;
-  secondary?: string;
-  leading?: ReactNode;
-}) {
-  return (
-    <li>
-      <button
-        type="button"
-        onClick={onClick}
-        className={cn(
-          "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors",
-          secondary ? "flex-col items-stretch gap-0.5" : "",
-          active
-            ? "bg-accent font-medium text-accent-foreground"
-            : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-        )}
-      >
-        <div className="flex min-w-0 items-center gap-2">
-          {leading}
-          <span className={cn("truncate", !secondary && "flex-1")}>{primary}</span>
-        </div>
-        {secondary && (
-          <span className="truncate font-mono text-[10px] opacity-70">{secondary}</span>
-        )}
-      </button>
-    </li>
-  );
-}
 
 export function EditorSidebar({
   section,

@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FieldRefAutocompleteMenu } from "@/components/field-ref/FieldRefAutocompleteMenu";
+import { FieldRefPickerMenu } from "@/components/field-ref/FieldRefPickerMenu";
+import { RemovableTag } from "@/components/field-ref/RemovableTag";
 import {
   applyAutocompleteId,
   buildAutocompleteItems,
@@ -12,7 +15,6 @@ import {
   emptyFieldExpr,
   parseFieldExpr,
   serializeFieldExpr,
-  SOURCE_TAG_OPTIONS,
   type FieldExpr,
 } from "@/shared/field/expr";
 import type { AppConfig, FieldSource } from "@/shared/types";
@@ -28,44 +30,6 @@ interface FieldRefInputProps {
   config: AppConfig;
   placeholder?: string;
   className?: string;
-}
-
-function RemovableTag({
-  label,
-  tone = "default",
-  onRemove,
-}: {
-  label: string;
-  tone?: "default" | "source" | "aggregate" | "processor" | "alias";
-  onRemove: () => void;
-}) {
-  const toneClass = {
-    default: "bg-muted text-foreground",
-    source: "bg-primary/10 text-primary",
-    aggregate: "bg-amber-500/15 text-amber-800 dark:text-amber-200",
-    processor: "bg-blue-500/10 text-blue-800 dark:text-blue-200",
-    alias: "bg-violet-500/10 text-violet-800 dark:text-violet-200",
-  }[tone];
-
-  return (
-    <span
-      className={cn(
-        "inline-flex max-w-full items-center gap-0.5 rounded px-1.5 py-0.5 text-xs font-medium",
-        toneClass,
-      )}
-    >
-      <span className="truncate">{label}</span>
-      <button
-        type="button"
-        className="shrink-0 rounded-sm opacity-70 hover:opacity-100"
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={onRemove}
-        aria-label={`移除 ${label}`}
-      >
-        <X className="size-3" />
-      </button>
-    </span>
-  );
 }
 
 export function FieldRefInput({
@@ -286,55 +250,6 @@ export function FieldRefInput({
     }
   };
 
-  const processorOptions = Object.keys(config.customProcessors).map((id) => ({
-    id,
-    label: id,
-    description: "Processor",
-  }));
-  const aliasOptions = Object.entries(config.aliasMaps).map(([mapkey, group]) => ({
-    mapkey,
-    label: group.name ? `${group.name} (${mapkey})` : mapkey,
-  }));
-
-  const renderMenu = (items: AutocompleteItem[], onPick: (item: AutocompleteItem) => void) => {
-    const groups = [...new Set(items.map((i) => i.group))];
-    return (
-      <ul className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-auto rounded-md border bg-popover py-1 shadow-md">
-        {groups.map((group) => (
-          <li key={group}>
-            <div className="px-3 py-1 text-[10px] font-medium text-muted-foreground">
-              {group}
-            </div>
-            {items
-              .filter((i) => i.group === group)
-              .map((item) => {
-                const idx = items.indexOf(item);
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={cn(
-                      "flex w-full flex-col px-3 py-1.5 text-left text-xs hover:bg-accent",
-                      showAutocomplete && idx === highlightIdx && "bg-accent",
-                    )}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      onPick(item);
-                    }}
-                  >
-                    <span className="font-mono">{item.label}</span>
-                    {item.hint && (
-                      <span className="text-[10px] text-muted-foreground">{item.hint}</span>
-                    )}
-                  </button>
-                );
-              })}
-          </li>
-        ))}
-      </ul>
-    );
-  };
-
   return (
     <div ref={wrapRef} className={cn("relative", className)}>
       <div
@@ -401,98 +316,30 @@ export function FieldRefInput({
             <Plus className="size-3.5" />
           </Button>
           {menuOpen && !showAutocomplete && (
-            <ul className="absolute right-0 z-50 mt-1 max-h-56 w-52 overflow-auto rounded-md border bg-popover py-1 shadow-md">
-              {!hasSource && !hasSplitRef && (
-                <>
-                  <li className="px-3 py-1 text-[10px] font-medium text-muted-foreground">
-                    数据来源
-                  </li>
-                  {SOURCE_TAG_OPTIONS.map((s) => (
-                    <li key={s.id}>
-                      <button
-                        type="button"
-                        className="w-full px-3 py-1.5 text-left font-mono text-xs hover:bg-accent"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          pickSource(s.id as FieldSource);
-                        }}
-                      >
-                        source:{s.id}
-                      </button>
-                    </li>
-                  ))}
-                </>
-              )}
-              {mode === "field" && splitNames.length > 0 && !hasSplitRef && (
-                <>
-                  <li className="px-3 py-1 text-[10px] font-medium text-muted-foreground">
-                    拆分项
-                  </li>
-                  {splitNames.map((name) => (
-                    <li key={name}>
-                      <button
-                        type="button"
-                        className="w-full px-3 py-1.5 text-left font-mono text-xs hover:bg-accent"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          pickSplitRef(name);
-                        }}
-                      >
-                        aggregate:{name}
-                      </button>
-                    </li>
-                  ))}
-                </>
-              )}
-              {(hasSource || hasSplitRef) && (
-                <li className="px-3 py-1 text-[10px] font-medium text-muted-foreground">
-                  Processor
-                </li>
-              )}
-              {processorOptions.map((p) => (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    disabled={expr.processors.includes(p.id)}
-                    className="w-full px-3 py-1.5 text-left font-mono text-xs hover:bg-accent disabled:opacity-40"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      addProcessor(p.id);
-                    }}
-                  >
-                    processor:{p.id}
-                  </button>
-                </li>
-              ))}
-              {(hasSource || hasSplitRef) && !expr.aliasMap && (
-                <li className="px-3 py-1 text-[10px] font-medium text-muted-foreground">
-                  Alias
-                </li>
-              )}
-              {aliasOptions.map(({ mapkey, label }) => (
-                <li key={mapkey}>
-                  <button
-                    type="button"
-                    className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setAlias(mapkey);
-                    }}
-                  >
-                    <span className="font-mono">alias:{mapkey}</span>
-                    {label !== mapkey && (
-                      <span className="ml-1 text-muted-foreground">· {label}</span>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <FieldRefPickerMenu
+              mode={mode}
+              splitNames={splitNames}
+              expr={expr}
+              config={config}
+              hasSource={hasSource}
+              hasSplitRef={hasSplitRef}
+              onPickSource={pickSource}
+              onPickSplitRef={pickSplitRef}
+              onAddProcessor={addProcessor}
+              onSetAlias={setAlias}
+            />
           )}
         </div>
       </div>
 
-      {showAutocomplete &&
-        renderMenu(autocompleteItems, applyAutocomplete)}
+      {showAutocomplete && (
+        <FieldRefAutocompleteMenu
+          items={autocompleteItems}
+          highlightIdx={highlightIdx}
+          showHighlight={showAutocomplete}
+          onPick={applyAutocomplete}
+        />
+      )}
 
       <p className="mt-1 text-[10px] text-muted-foreground">
         输入 <kbd className="rounded border px-1 font-mono">/</kbd> 唤起补全；Processor 可叠加多个

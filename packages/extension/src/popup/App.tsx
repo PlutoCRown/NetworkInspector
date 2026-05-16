@@ -8,6 +8,7 @@ import {
   Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ToolbarIconButton } from "@/components/ui/preset-buttons";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -57,15 +58,9 @@ export function PopupApp() {
           <h1 className="text-lg font-semibold">NetworkInspector</h1>
           <p className="text-xs text-muted-foreground">快捷网络检查和回放面板</p>
         </div>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-8 w-8 shrink-0"
-          onClick={handleRefresh}
-          title="刷新规则组"
-        >
+        <ToolbarIconButton onClick={handleRefresh} title="刷新规则组">
           <RefreshCw className="h-4 w-4" />
-        </Button>
+        </ToolbarIconButton>
       </div>
 
       <div
@@ -75,18 +70,20 @@ export function PopupApp() {
             ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/50"
             : "border-border bg-muted/40",
         )}
+        onClick={() => openSidePanel(() => window.close())}
       >
         <div>
           <Label htmlFor="global-switch" className="text-sm font-medium">
-            总开关
+            {globalOn ? "捕捉中" : "已暂停"}
           </Label>
           <p className="text-[10px] text-muted-foreground">
-            {globalOn ? "捕获已启用" : "已暂停所有新捕获"}
+            点击打开面板查看
           </p>
         </div>
         <Switch
           id="global-switch"
           checked={globalOn}
+          onClick={e => e.stopPropagation()}
           onCheckedChange={() => sendMessage({ type: "TOGGLE_CAPTURE_ENABLED" })}
         />
       </div>
@@ -125,10 +122,7 @@ export function PopupApp() {
               {effectiveCount} 个生效中
             </p>
           </div>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 shrink-0"
+          <ToolbarIconButton
             onClick={() => setGroupsExpanded((v) => !v)}
             title={groupsExpanded ? "收起" : "展开"}
           >
@@ -137,16 +131,10 @@ export function PopupApp() {
             ) : (
               <ChevronDown className="h-4 w-4" />
             )}
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 shrink-0"
-            onClick={importJson.openFilePicker}
-            title="导入 JSON"
-          >
+          </ToolbarIconButton>
+          <ToolbarIconButton onClick={importJson.openFilePicker} title="导入 JSON">
             <FileUp className="h-4 w-4" />
-          </Button>
+          </ToolbarIconButton>
           <input
             ref={importJson.fileRef}
             type="file"

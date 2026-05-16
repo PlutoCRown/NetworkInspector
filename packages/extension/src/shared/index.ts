@@ -1,6 +1,7 @@
 /** 扩展内共享模块入口（按域分子目录，此处聚合常用导出） */
 
 export * from "./types";
+export { DEFAULT_RULE_GROUPS, DEFAULT_ALIAS_MAPS } from "./defaults";
 
 export { APP_NAME, APP_VERSION } from "./app/meta";
 export {

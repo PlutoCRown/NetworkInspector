@@ -1,8 +1,8 @@
 import {
   RENDERER_DEFINITIONS,
   type RendererDefinition,
-  type RendererId,
-} from "@network-inspector/presets";
+} from "./renderers";
+import type { RendererId } from "../types/rule";
 
 export { RENDERER_DEFINITIONS, type RendererDefinition };
 

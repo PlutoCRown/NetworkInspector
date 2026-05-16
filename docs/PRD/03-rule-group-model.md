@@ -13,8 +13,6 @@
 | `sites` | string[] | 是 | 站点 URL 正则列表（页面级匹配） |
 | `capture` | string[] | 是 | 请求 URL 正则列表（全局捕获池） |
 | `rules` | Rule[] | 是 | 按 URL 细分的提取与展示规则 |
-| `template` | string | 否 | 自定义渲染模板 HTML 片段；省略则用预设 renderer |
-| `decode` | string | 否 | 高级模式：全局解码脚本（见 [10](./10-modes-and-advanced.md)） |
 
 ## 3.2 Rule 对象
 

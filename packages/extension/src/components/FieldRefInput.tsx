@@ -13,9 +13,6 @@ import { cn } from "@/lib/utils";
 interface FieldRefInputProps {
   value: string;
   onChange: (value: string) => void;
-  /** @deprecated 使用 allowAggregate；保留时等同纯路径输入 */
-  pathOnly?: boolean;
-  /** 聚合规则：来源列表含 aggregate，且可从 json/query 等读取整包请求 */
   allowAggregate?: boolean;
   placeholder?: string;
   className?: string;
@@ -24,7 +21,6 @@ interface FieldRefInputProps {
 export function FieldRefInput({
   value,
   onChange,
-  pathOnly = false,
   allowAggregate = false,
   placeholder = "路径，如 event.name",
   className,
@@ -67,17 +63,6 @@ export function FieldRefInput({
     const { source } = parseFieldRef(value);
     onChange(source ? formatFieldRef(source, path) : path);
   };
-
-  if (pathOnly && !allowAggregate) {
-    return (
-      <Input
-        className={cn("bg-background font-mono text-xs", className)}
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    );
-  }
 
   const source = parsed.source;
   const suggestions = filterSourceSuggestions(sourceQuery, { allowAggregate });

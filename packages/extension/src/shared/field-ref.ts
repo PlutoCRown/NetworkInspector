@@ -1,6 +1,5 @@
 import type { FieldSource } from "./types";
 
-/** 从完整请求体/响应中提取 */
 export const REQUEST_FIELD_SOURCES: { id: FieldSource; label: string }[] = [
   { id: "query", label: "query" },
   { id: "json", label: "json" },
@@ -17,9 +16,6 @@ const ALL_SOURCE_IDS = new Set<FieldSource>([
   ...REQUEST_FIELD_SOURCES.map((s) => s.id),
   AGGREGATE_ITEM_SOURCE.id,
 ]);
-
-/** @deprecated 使用 getFieldSources */
-export const FIELD_SOURCES = REQUEST_FIELD_SOURCES;
 
 export function getFieldSources(opts?: { allowAggregate?: boolean }) {
   if (opts?.allowAggregate) {

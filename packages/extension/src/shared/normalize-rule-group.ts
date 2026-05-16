@@ -1,16 +1,6 @@
-import type { Rule, RuleGroup } from "./types";
-import { defaultFieldsForRenderer, resolveRendererId } from "./renderer-registry";
-
-function emptyRuleForUrl(url: string): Rule {
-  const renderer = "card";
-  return {
-    id: `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    url,
-    renderer,
-    fields: defaultFieldsForRenderer(renderer, false),
-    aggregate: false,
-  };
-}
+import { createEmptyRule } from "./create-empty-rule";
+import { resolveRendererId } from "./renderer-registry";
+import type { RuleGroup } from "./types";
 
 /** 保证 capture 与 rules 一一对应，并同步 url */
 export function normalizeRuleGroup(group: RuleGroup): RuleGroup {
@@ -19,7 +9,7 @@ export function normalizeRuleGroup(group: RuleGroup): RuleGroup {
 
   while (rules.length < capture.length) {
     const url = capture[rules.length] ?? "/api/";
-    rules.push(emptyRuleForUrl(url));
+    rules.push(createEmptyRule(url));
   }
   while (capture.length < rules.length) {
     capture.push(rules[capture.length]?.url ?? "/api/");

@@ -3,8 +3,8 @@ import { Download, Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppState, sendMessage } from "@/hooks/useAppState";
+import { createEmptyRule } from "@/shared/create-empty-rule";
 import { normalizeRuleGroup } from "@/shared/normalize-rule-group";
-import { defaultFieldsForRenderer } from "@/shared/renderer-registry";
 import type { RuleGroup } from "@/shared/types";
 import { cn } from "@/lib/utils";
 import { RuleGroupForm } from "./RuleGroupForm";
@@ -17,15 +17,7 @@ function emptyGroup(): RuleGroup {
     enabled: true,
     sites: ["^https?://"],
     capture: ["/api/"],
-    rules: [
-      {
-        id: `rule-${Date.now()}`,
-        url: "/api/",
-        renderer: "card",
-        aggregate: false,
-        fields: defaultFieldsForRenderer("card", false),
-      },
-    ],
+    rules: [createEmptyRule("/api/")],
   });
 }
 

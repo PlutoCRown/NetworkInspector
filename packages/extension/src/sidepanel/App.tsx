@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { CaptureCard, CaptureListHeader } from "@/components/CaptureCard";
+import { CaptureListHeader } from "@/components/CaptureCard";
+import { CaptureRenderer } from "@/components/CaptureRenderer";
 import { useAppState, sendMessage } from "@/hooks/useAppState";
 
 export function SidePanelApp() {
@@ -50,7 +51,7 @@ export function SidePanelApp() {
         ) : (
           <div className="flex flex-col gap-2">
             {captures.map((record) => (
-              <CaptureCard key={record.id} record={record} />
+              <CaptureRenderer key={record.id} record={record} />
             ))}
           </div>
         )}

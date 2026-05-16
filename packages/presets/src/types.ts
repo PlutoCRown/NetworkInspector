@@ -1,4 +1,4 @@
-export type FieldSource = "query" | "json" | "form-data" | "header";
+export type FieldSource = "query" | "json" | "form-data" | "header" | "aggregate";
 
 export type RendererId = "card" | "divider";
 
@@ -23,15 +23,16 @@ export interface FilterRule {
 
 export interface Rule {
   id: string;
+  /** 与 capture[] 同索引对应；保存时与 capture[i] 同步 */
   url: string;
   renderer: RendererId | string;
   aggregate?: boolean;
+  /** 必须解析为 JSON 数组，如 json:events */
   aggregateFrom?: string;
   fields: Record<string, string>;
   alias?: AliasRule[];
   highlights?: HighlightRule[];
   filters?: FilterRule[];
-  decode?: string;
 }
 
 export interface RuleGroup {
@@ -42,5 +43,4 @@ export interface RuleGroup {
   sites: string[];
   capture: string[];
   rules: Rule[];
-  decode?: string;
 }

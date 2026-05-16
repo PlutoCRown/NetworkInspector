@@ -1,4 +1,4 @@
-import { DEFAULT_RULE_GROUPS } from "./default-rule-group";
+import { DEFAULT_RULE_GROUPS } from "@network-inspector/presets";
 import { normalizeRuleGroup } from "./normalize-rule-group";
 import type { AppState, CaptureRecord, RuleGroup } from "./types";
 import { STORAGE_KEYS, MAX_CAPTURES } from "./types";

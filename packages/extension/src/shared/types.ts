@@ -1,6 +1,6 @@
-export type FieldSource = "query" | "json" | "form-data" | "header";
+export type FieldSource = "query" | "json" | "form-data" | "header" | "aggregate";
 
-export type RendererId = "title-popover" | "custom";
+export type RendererId = "card" | "divider" | "custom";
 
 export interface AliasRule {
   field: string;

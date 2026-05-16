@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
-  FIELD_SOURCES,
   filterSourceSuggestions,
   formatFieldRef,
+  getFieldSources,
   parseFieldRef,
 } from "@/shared/field-ref";
 import type { FieldSource } from "@/shared/types";
@@ -13,7 +13,10 @@ import { cn } from "@/lib/utils";
 interface FieldRefInputProps {
   value: string;
   onChange: (value: string) => void;
+  /** @deprecated 使用 allowAggregate；保留时等同纯路径输入 */
   pathOnly?: boolean;
+  /** 聚合规则：来源列表含 aggregate，且可从 json/query 等读取整包请求 */
+  allowAggregate?: boolean;
   placeholder?: string;
   className?: string;
 }
@@ -22,6 +25,7 @@ export function FieldRefInput({
   value,
   onChange,
   pathOnly = false,
+  allowAggregate = false,
   placeholder = "路径，如 event.name",
   className,
 }: FieldRefInputProps) {
@@ -31,6 +35,7 @@ export function FieldRefInput({
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const sourceInputRef = useRef<HTMLInputElement>(null);
+  const sources = getFieldSources({ allowAggregate });
 
   useEffect(() => {
     setPathDraft(parseFieldRef(value).path);
@@ -63,7 +68,7 @@ export function FieldRefInput({
     onChange(source ? formatFieldRef(source, path) : path);
   };
 
-  if (pathOnly) {
+  if (pathOnly && !allowAggregate) {
     return (
       <Input
         className={cn("bg-background font-mono text-xs", className)}
@@ -75,7 +80,10 @@ export function FieldRefInput({
   }
 
   const source = parsed.source;
-  const suggestions = filterSourceSuggestions(sourceQuery);
+  const suggestions = filterSourceSuggestions(sourceQuery, { allowAggregate });
+  const sourcePlaceholder = allowAggregate
+    ? "输入 aggregate / query / json / form-data / header"
+    : "输入 query / json / form-data / header";
 
   const handleSourceKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && open && suggestions.length === 1) {
@@ -98,12 +106,12 @@ export function FieldRefInput({
           ref={sourceInputRef}
           className="bg-background font-mono text-xs"
           value={sourceQuery || value}
-          placeholder="输入 query / json / form-data / header"
+          placeholder={sourcePlaceholder}
           onChange={(e) => {
             const v = e.target.value;
             setSourceQuery(v);
             setOpen(true);
-            const exact = FIELD_SOURCES.find((s) => s.id === v);
+            const exact = sources.find((s) => s.id === v);
             if (exact) pickSource(exact.id);
             else onChange(v);
           }}
@@ -123,6 +131,9 @@ export function FieldRefInput({
                   }}
                 >
                   <span className="font-medium">{s.label}</span>
+                  {s.id === "aggregate" && (
+                    <span className="ml-1 text-muted-foreground">数组项相对路径</span>
+                  )}
                 </button>
               </li>
             ))}
@@ -139,11 +150,18 @@ export function FieldRefInput({
         className,
       )}
     >
-      <span className="inline-flex items-center gap-0.5 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+      <span
+        className={cn(
+          "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs font-medium",
+          source === "aggregate"
+            ? "bg-amber-500/15 text-amber-800 dark:text-amber-200"
+            : "bg-primary/10 text-primary",
+        )}
+      >
         {source}
         <button
           type="button"
-          className="rounded hover:bg-primary/20"
+          className="rounded hover:bg-black/10"
           onClick={clearSource}
           aria-label="移除来源"
         >

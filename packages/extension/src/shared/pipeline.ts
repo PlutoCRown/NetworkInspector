@@ -1,5 +1,7 @@
 import { extractField, extractFields } from "./extract";
+import { formatFieldRef, parseFieldRef } from "./field-ref";
 import { getByPath } from "./path";
+import type { ExtractInput } from "./extract";
 import { matchesAny } from "./regex";
 import { normalizeRuleGroup } from "./normalize-rule-group";
 import { applyAlias, applyFilters, resolveHighlight } from "./post-process";
@@ -31,13 +33,32 @@ function findRuleIndex(group: RuleGroup, requestUrl: string): number {
   return bestIdx;
 }
 
-function extractFieldsFromObject(
-  obj: unknown,
+/** 聚合模式下：aggregate / 裸路径从数组项读取，其它来源从完整请求读取 */
+function extractFieldForAggregateItem(
+  item: unknown,
+  input: ExtractInput,
+  ref: string,
+): unknown {
+  if (!ref) return item;
+
+  const { source, path } = parseFieldRef(ref);
+  if (!source) {
+    return getByPath(item, ref);
+  }
+  if (source === "aggregate") {
+    return path ? getByPath(item, path) : item;
+  }
+  return extractField(input, formatFieldRef(source, path));
+}
+
+function extractFieldsFromAggregateItem(
+  item: unknown,
+  input: ExtractInput,
   fields: Record<string, string>,
 ): Record<string, unknown> {
   const data: Record<string, unknown> = {};
-  for (const [key, path] of Object.entries(fields)) {
-    data[key] = path ? getByPath(obj, path) : obj;
+  for (const [key, ref] of Object.entries(fields)) {
+    data[key] = extractFieldForAggregateItem(item, input, ref);
   }
   return data;
 }
@@ -85,8 +106,14 @@ function processRuleCapture(
     if (!Array.isArray(arr)) return null;
 
     const records: CaptureRecord[] = [];
+    const extractInput = {
+      url: payload.url,
+      requestHeaders: payload.requestHeaders,
+      requestBody: payload.requestBody,
+      responseBody: payload.responseBody,
+    };
     for (const item of arr) {
-      const rawData = extractFieldsFromObject(item, rule.fields);
+      const rawData = extractFieldsFromAggregateItem(item, extractInput, rule.fields);
       const record = buildRecord(group, rule, payload, rawData, rawData);
       if (record) records.push(record);
     }

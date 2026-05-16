@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppState, sendMessage } from "@/hooks/useAppState";
 import { normalizeRuleGroup } from "@/shared/normalize-rule-group";
+import { defaultFieldsForRenderer } from "@/shared/renderer-registry";
 import type { RuleGroup } from "@/shared/types";
 import { cn } from "@/lib/utils";
 import { RuleGroupForm } from "./RuleGroupForm";
@@ -20,14 +21,9 @@ function emptyGroup(): RuleGroup {
       {
         id: `rule-${Date.now()}`,
         url: "/api/",
-        renderer: "title-popover",
+        renderer: "card",
         aggregate: false,
-        fields: {
-          title: "json:",
-          desc: "json:",
-          expend: "json:",
-          popover: "json:",
-        },
+        fields: defaultFieldsForRenderer("card", false),
       },
     ],
   });

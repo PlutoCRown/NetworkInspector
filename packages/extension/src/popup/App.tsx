@@ -58,7 +58,7 @@ export function PopupApp() {
       <div className="flex items-center justify-between gap-2">
         <div>
           <h1 className="text-lg font-semibold">NetworkInspector</h1>
-          <p className="text-xs text-muted-foreground">规则组与捕获控制</p>
+          <p className="text-xs text-muted-foreground">快捷网络检查和回放面板</p>
         </div>
         <Button
           size="icon"
@@ -138,16 +138,16 @@ export function PopupApp() {
                     <p className="text-[10px] text-muted-foreground">
                       {group.enabled ? (
                         <Badge variant="success" className="mr-1 px-1 py-0 text-[9px]">
-                          开
+                          已启用
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="mr-1 px-1 py-0 text-[9px]">
-                          关
+                          已关闭
                         </Badge>
                       )}
                       {!siteOk && group.enabled && (
                         <Badge variant="outline" className="mr-1 px-1 py-0 text-[9px]">
-                          站点未匹配
+                          该规则在当前网页不会生效
                         </Badge>
                       )}
                       {group.rules.length} 条规则

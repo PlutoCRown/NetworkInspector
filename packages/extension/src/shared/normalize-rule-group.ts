@@ -1,16 +1,13 @@
 import type { Rule, RuleGroup } from "./types";
+import { defaultFieldsForRenderer, resolveRendererId } from "./renderer-registry";
 
 function emptyRuleForUrl(url: string): Rule {
+  const renderer = "card";
   return {
     id: `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     url,
-    renderer: "title-popover",
-    fields: {
-      title: "json:",
-      desc: "json:",
-      expend: "json:",
-      popover: "json:",
-    },
+    renderer,
+    fields: defaultFieldsForRenderer(renderer, false),
     aggregate: false,
   };
 }
@@ -31,6 +28,7 @@ export function normalizeRuleGroup(group: RuleGroup): RuleGroup {
   rules = rules.map((rule, i) => ({
     ...rule,
     url: capture[i] ?? rule.url,
+    renderer: resolveRendererId(rule.renderer),
     aggregate: rule.aggregate ?? false,
   }));
 

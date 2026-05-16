@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { processCapture } from "./pipeline";
-import type { RuleGroup } from "./types";
+import type { CaptureRecord, RuleGroup } from "./types";
 
 const TEST_GROUP: RuleGroup = {
   version: 1,
@@ -66,6 +66,67 @@ describe("processCapture", () => {
     }),
     );
     expect(result?.data.title).toBe("页面浏览");
+  });
+
+  test("aggregate: reads item path; json: reads full request", () => {
+    const group: RuleGroup = {
+      ...TEST_GROUP,
+      capture: ["/v1/batch"],
+      rules: [
+        {
+          id: "batch",
+          url: "/v1/batch",
+          renderer: "card",
+          aggregate: true,
+          aggregateFrom: "json:items",
+          fields: {
+            title: "aggregate:name",
+            popover: "json:meta.source",
+          },
+        },
+      ],
+    };
+    const results = processCapture(group, {
+      url: "https://app.acme.io/v1/batch",
+      method: "POST",
+      tabUrl: "https://app.acme.io/",
+      responseBody: JSON.stringify({
+        meta: { source: "web" },
+        items: [{ name: "a" }, { name: "b" }],
+      }),
+    });
+    expect(Array.isArray(results)).toBe(true);
+    const list = results as CaptureRecord[];
+    expect(list).toHaveLength(2);
+    expect(list[0]?.data.title).toBe("a");
+    expect(list[0]?.data.popover).toBe("web");
+    expect(list[1]?.data.title).toBe("b");
+  });
+
+  test("legacy bare path still works in aggregate mode", () => {
+    const group: RuleGroup = {
+      ...TEST_GROUP,
+      capture: ["/v1/batch"],
+      rules: [
+        {
+          id: "batch",
+          url: "/v1/batch",
+          renderer: "card",
+          aggregate: true,
+          aggregateFrom: "json:",
+          fields: { title: "event" },
+        },
+      ],
+    };
+    const results = processCapture(group, {
+      url: "https://app.acme.io/v1/batch",
+      method: "POST",
+      tabUrl: "https://app.acme.io/",
+      responseBody: JSON.stringify([{ event: "x" }, { event: "y" }]),
+    });
+    const list = results as CaptureRecord[];
+    expect(list[0]?.data.title).toBe("x");
+    expect(list[1]?.data.title).toBe("y");
   });
 
   test("strips _internal from beacon expend", () => {

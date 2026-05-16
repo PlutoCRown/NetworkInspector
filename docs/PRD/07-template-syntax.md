@@ -2,95 +2,116 @@
 
 ## 7.1 文档性质
 
-模板是 **HTML 片段**，不是完整文档（无 `<!DOCTYPE>`、无 `<html>` 要求）。权威示例：[`rule-group.render.example.html`](../../rule-group.render.example.html)。
+模板是 **HTML 片段**（`.tpl` 文件），不是完整文档。权威示例：
 
-用于 `renderer: custom` 或规则组级 `template` 字段；侧边栏解析后挂载到 Shadow DOM 或隔离容器（推荐，防止样式泄漏）。
+- 卡片：`packages/presets/renderers/card.tpl`
+- 分割线：`packages/presets/renderers/divider.tpl`
+- 自定义示例：[`rule-group.render.example.html`](../../rule-group.render.example.html)
 
-## 7.2 插值：`{{fieldName}}`
+用于内置 `renderer`（`card`、`divider`）或 `renderer: custom` + `template` 字段。侧边栏由 `TemplateCapture` 按槽位与指令渲染。
 
-- 双大括号绑定 [05](./05-extraction.md) 产出的 `data` 字段。
-- 值为 `string` → 文本插入（HTML 转义，防 XSS）。
-- 值为 `object` / `array` → 默认 `JSON.stringify(value, null, 2)`；可在后续版本支持 `|json` 等过滤器（非一期 Must）。
+## 7.2 插值：`{{name}}`
 
-## 7.3 指令属性：`x-*`
+| 类型 | 语法 | 说明 |
+|------|------|------|
+| 数据字段 | `{{title}}`、`{{popover}}` | 绑定规则 `fields` 提取后的 `data` 键；`object`/`array` 会 `JSON.stringify` |
+| 内置变量 | `{{__TIME__}}` 等 | 见 **7.3**；双下划线包裹，**不会**出现在编辑器字段列表中 |
 
-指令是 **布尔属性**（存在即为真），写在普通 HTML 标签上。
+字符串插入时做 HTML 转义（React 文本节点）。
 
-| 指令 | 含义 | 渲染时机 |
-|------|------|----------|
-| `x-card` | 卡片根节点；Popover 锚点 | 立即 |
-| `x-title` | 主标题槽位 | 立即 |
-| `x-title` + `highlight` | 高亮标题槽位 | 见 7.5 |
-| `x-desc` | 描述槽位 | 立即 |
-| `x-expand` | 展开内容槽位 | **懒渲染**：用户点击展开后 |
-| `x-popover` | Popover 内容槽位 | **懒渲染**：用户悬停/对准卡片时 |
+## 7.3 内置变量与函数
 
-### 示例（来自产品定义）
+当前支持的**内置变量**（实现于 `@network-inspector/presets`）：
+
+| 变量 | 输出示例 | 说明 |
+|------|----------|------|
+| `{{__TIME__}}` | `15:04:05` | 捕获时刻，24 小时 `HH:mm:ss` |
+| `{{__DATE__}}` | `2026-05-16` | 捕获日期 `YYYY-MM-DD` |
+| `{{__TIMESTAMP__}}` | `1715857445000` | 毫秒时间戳 |
+| `{{__REQUEST_URL__}}` | 完整请求 URL | |
+| `{{__RULE_ID__}}` | 规则 ID | |
+| `{{__RULE_GROUP_ID__}}` | 规则组 ID | |
+
+> 后续版本可扩展过滤器，如 `{{title \| upper}}`（非一期）。
+
+## 7.4 指令属性：`x-*`
+
+指令为 **布尔属性**（写在标签上即生效）。
+
+| 指令 | 含义 | 交互 |
+|------|------|------|
+| `x-card` | 卡片根节点；Popover 锚点 | 悬停触发 Popover（若有 `x-popover`） |
+| `x-title` | 主标题 | 常显 |
+| `x-title` + `highlight` | 高亮标题（与上二选一） | 命中 `highlights` 时显示并加 `data-tone` |
+| `x-if="field"` | 条件块 | 仅当 `data.field` 有内容时渲染 |
+| `x-expand` | 展开区 | **点击整张卡片**展开/收起，CSS 网格动画 |
+| `x-popover` | 悬停浮层 | **瞄准（悬停）即显示**，移出延迟关闭 |
+| `x-divider` | 分割线布局 | 仅 `divider` renderer |
+
+### 卡片模板结构（`card.tpl`）
 
 ```html
-<div x-title>{{title}}</div>
-<div x-title highlight>{{title}}</div>
-<div x-expand>{{expend}}</div>
-<div x-popover>{{popover}}</div>
+<article x-card class="ni-card">
+  <div class="ni-card__hit"><!-- 整块可点，触发 x-expand -->
+    <div x-title>{{title}}</div>
+    <div x-title highlight>{{title}}</div>
+    <div x-if="desc">{{desc}}</div>
+    <span>{{__REQUEST_URL__}}</span>
+    <span>{{__TIME__}}</span>
+  </div>
+  <div x-expand class="ni-expand-outer">…</div>
+</article>
+<div x-popover>…</div>
 ```
 
-## 7.4 `<style>` 标签
+## 7.5 `x-title` 与 `highlight`
 
-- **允许**在模板顶部或任意位置包含 `<style>`。
-- 样式作用域：仅作用于 **本卡片** 实例（Shadow DOM 或加唯一前缀类名）。
-- 不得污染侧边栏全局 shadcn 主题。
+1. 根据 [08](./08-post-processing.md) 判断是否命中 `highlights`（针对 `title`）。
+2. **命中**：只渲染带 `highlight` 的 `x-title`，并设置 `data-tone`（`danger`、`success` 等）。
+3. **未命中**：只渲染普通 `x-title`。
 
-## 7.5 `x-title` 与 `highlight` 二选一逻辑
+## 7.6 `x-expand` 与展开动画
 
-当模板同时存在：
+- 初始：`grid-template-rows: 0fr` 折叠。
+- 点击 **整张卡片**（`.ni-card__hit` 所在 article）切换 `data-expanded="true"`，过渡到 `1fr`。
+- 无左侧 chevron；无 `expend` 数据时不展开。
 
-```html
-<div x-title>{{title}}</div>
-<div x-title highlight>{{title}}</div>
-```
+## 7.7 `x-popover` 悬停即显
 
-**预期行为**：
+- 鼠标进入 `x-card` 区域即打开 Popover（无需点击）。
+- 移出卡片与浮层后约 120ms 关闭；可在浮层上保持悬停以阅读内容。
+- 首次显示时渲染 `{{popover}}` 插值。
 
-1. 先根据 [08](./08-post-processing.md) 计算该条 capture 是否命中任一 `highlights`（针对 `title` 字段）。
-2. **命中**：仅渲染/显示 `highlight` 节点，并设置 `data-tone` 为规则中的 `tone`（如 `danger`、`success`）。
-3. **未命中**：仅渲染/显示普通 `x-title` 节点。
-4. 同一时刻 DOM 中只应有一个标题节点可见（另一节点不挂载或 `display: none`）。
+## 7.8 `<style>` 标签
 
-## 7.6 `x-expand` 懒渲染
+- 允许在 `.tpl` 内写 `<style>`。
+- 运行时加 `[data-ni-scope]` 前缀，避免污染侧边栏全局主题。
 
-- 卡片初始：**不创建** `x-expand` 子树（或创建但 `hidden` 且无内容计算，推荐不创建以省性能）。
-- 用户点击展开（卡片级 chevron 或整块可点区域）后：
-  - 首次：解析 `{{expend}}` 并挂载。
-  - 再次点击：折叠，可保留已挂载 DOM（实现可选）或销毁（推荐保留）。
+## 7.9 从模板预解析表单字段
 
-## 7.7 `x-popover` 懒渲染
+扩展启动时通过 `extractTemplateMeta()` **一次性**解析所有内置 `.tpl`：
 
-- 悬停 `x-card`（或含 `x-card` 的 article）时：
-  - 首次显示 Popover：解析 `x-popover` 内插值并渲染到 shadcn Popover / 浮动层。
-- 移出后关闭 Popover；内容可缓存。
-- 多个 `x-popover` 节点时：取第一个（其余忽略并 dev 警告）。
+- `fields[]`：所有 `{{}}` 中的数据字段名（排除内置变量）。
+- `slots`：`x-card`、`x-expand`、`x-popover` 等。
 
-## 7.8 未使用字段的槽位
+编辑器选择 Renderer 后，下方字段行 **直接来自预解析结果**，不在用户切换时再解析。
 
-- 模板含 `{{desc}}` 但 `data.desc` 不存在：渲染空。
-- 模板含 `x-expand` 但 rule 无 `expend` 字段：展开区为空。
-- 模板不含某 `x-*` 指令：对应交互不出现（例如无 `x-popover` 则无悬停层）。
+实现：`packages/presets/src/parse-template.ts` → `packages/extension/src/shared/renderer-registry.ts`。
 
-## 7.9 与预设 Renderer 的关系
+## 7.10 预设包 `@network-inspector/presets`
 
-- 预设 `title-popover` / `title-desc-expand` 等价于内置模板，行为须与本文 **7.5–7.7** 一致。
-- 用户切换到 custom 时，用用户模板替换内置实现，**提取字段名不变**。
+| 路径 | 内容 |
+|------|------|
+| `renderers/*.tpl` | 内置 Renderer 模板 |
+| `rule-groups/*.json` | 默认规则组（A1.art、DOUYIN） |
+| `src/parse-template.ts` | 元数据提取、插值、内置变量 |
 
-## 7.10 安全
+扩展通过 workspace 依赖引用；发布空扩展时可不捆绑此包。
 
-- 禁止模板内 `<script>`、`on*` 内联事件。
-- 仅允许标签、属性、`{{}}`、`<style>`；解析器白名单过滤。
+## 7.11 安全
 
-## 7.11 子 agent 交付物
-
-- 模板解析器：HTML 片段 → 槽位描述 + 插值列表。
-- 运行时：按 7.5–7.7 控制挂载时机。
-- 单测：给定 template + data，断言 DOM 快照与懒加载触发次数。
+- 禁止 `<script>`、`on*` 内联事件。
+- 仅允许标签、属性、`{{}}`、`<style>`。
 
 ## 7.12 依赖文档
 

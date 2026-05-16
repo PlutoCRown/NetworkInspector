@@ -1,0 +1,11 @@
+{
+  "name": "@network-inspector/presets",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./renderers/*": "./renderers/*",
+    "./rule-groups/*": "./rule-groups/*"
+  }
+}

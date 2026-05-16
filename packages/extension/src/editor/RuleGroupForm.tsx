@@ -6,23 +6,21 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldRefInput } from "@/components/FieldRefInput";
 import { normalizeRuleGroup } from "@/shared/normalize-rule-group";
+import {
+  BUILTIN_RENDERERS,
+  defaultFieldsForRenderer,
+  resolveRendererId,
+} from "@/shared/renderer-registry";
 import type { Rule, RuleGroup } from "@/shared/types";
 
-const CARD_FIELDS = ["title", "desc", "expend", "popover"] as const;
-
-function defaultFields(aggregate: boolean): Record<string, string> {
-  const empty = Object.fromEntries(CARD_FIELDS.map((k) => [k, ""]));
-  if (aggregate) return empty;
-  return Object.fromEntries(CARD_FIELDS.map((k) => [k, "json:"]));
-}
-
 function emptyRuleForUrl(url: string): Rule {
+  const renderer = "card";
   return {
     id: `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     url,
-    renderer: "title-popover",
+    renderer,
     aggregate: false,
-    fields: defaultFields(false),
+    fields: defaultFieldsForRenderer(renderer, false),
   };
 }
 
@@ -71,6 +69,12 @@ export function RuleGroupForm({ group, onChange }: RuleGroupFormProps) {
     const rules = [...g.rules];
     rules[index] = { ...rules[index]!, ...patch };
     onChange(normalizeRuleGroup({ ...g, rules }));
+  };
+
+  const onRendererChange = (index: number, renderer: string) => {
+    const rid = resolveRendererId(renderer);
+    const fields = defaultFieldsForRenderer(rid, Boolean(g.rules[index]?.aggregate));
+    updateRule(index, { renderer: rid, fields });
   };
 
   return (
@@ -140,69 +144,97 @@ export function RuleGroupForm({ group, onChange }: RuleGroupFormProps) {
         </ul>
       </section>
 
-      {g.rules.map((rule, i) => (
-        <section key={rule.id} className="space-y-3 rounded-lg border p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="min-w-0">
-              <h2 className="font-medium">规则 {i + 1}</h2>
-              <code className="text-[10px] text-muted-foreground">{g.capture[i]}</code>
+      {g.rules.map((rule, i) => {
+        const rid = resolveRendererId(rule.renderer);
+        const rendererDef = BUILTIN_RENDERERS.find((r) => r.id === rid);
+        const fieldKeys = rendererDef?.fields ?? ["title"];
+
+        return (
+          <section key={rule.id} className="space-y-3 rounded-lg border p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="min-w-0">
+                <h2 className="font-medium">规则 {i + 1}</h2>
+                <code className="text-[10px] text-muted-foreground">{g.capture[i]}</code>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor={`agg-${rule.id}`} className="text-xs whitespace-nowrap">
+                    聚合请求
+                  </Label>
+                  <Switch
+                    id={`agg-${rule.id}`}
+                    checked={Boolean(rule.aggregate)}
+                    onCheckedChange={(aggregate) =>
+                      updateRule(i, {
+                        aggregate,
+                        aggregateFrom: aggregate ? rule.aggregateFrom ?? "json:" : undefined,
+                        fields: defaultFieldsForRenderer(rid, aggregate),
+                      })
+                    }
+                  />
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Label htmlFor={`agg-${rule.id}`} className="text-xs whitespace-nowrap">
-                  聚合请求
+
+            <div>
+              <Label>Renderer</Label>
+              <select
+                className="mt-1 flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={rid}
+                onChange={(e) => onRendererChange(i, e.target.value)}
+              >
+                {BUILTIN_RENDERERS.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+              {rendererDef && (
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  字段由模板预解析：{rendererDef.fields.join(", ") || "无"}
+                </p>
+              )}
+            </div>
+
+            {rule.aggregate && (
+              <div className="space-y-1.5 rounded-md bg-muted/40 p-3">
+                <Label>聚合数据源（须为 JSON 数组）</Label>
+                <FieldRefInput
+                  value={rule.aggregateFrom ?? ""}
+                  onChange={(aggregateFrom) => updateRule(i, { aggregateFrom })}
+                  placeholder="json:events"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  选择 json 来源并指向数组路径；下方字段可用 aggregate 读数组项，或其它来源读整包请求
+                </p>
+              </div>
+            )}
+
+            {fieldKeys.map((field) => (
+              <div key={field}>
+                <Label className="mb-1 block">
+                  {field}
+                  <span className="ml-1 font-normal text-muted-foreground">
+                    {rule.aggregate ? "（来源:路径，aggregate=数组项）" : "（来源:路径）"}
+                  </span>
                 </Label>
-                <Switch
-                  id={`agg-${rule.id}`}
-                  checked={Boolean(rule.aggregate)}
-                  onCheckedChange={(aggregate) =>
+                <FieldRefInput
+                  allowAggregate={Boolean(rule.aggregate)}
+                  value={rule.fields[field] ?? ""}
+                  onChange={(v) =>
                     updateRule(i, {
-                      aggregate,
-                      aggregateFrom: aggregate ? rule.aggregateFrom ?? "json:" : undefined,
-                      fields: defaultFields(aggregate),
+                      fields: { ...rule.fields, [field]: v },
                     })
+                  }
+                  placeholder={
+                    rule.aggregate ? "aggregate:event 或 json:headers" : "json:event.name"
                   }
                 />
               </div>
-            </div>
-          </div>
-
-          {rule.aggregate && (
-            <div className="space-y-1.5 rounded-md bg-muted/40 p-3">
-              <Label>聚合数据源（须为 JSON 数组）</Label>
-              <FieldRefInput
-                value={rule.aggregateFrom ?? ""}
-                onChange={(aggregateFrom) => updateRule(i, { aggregateFrom })}
-                placeholder="json:events"
-              />
-              <p className="text-[10px] text-muted-foreground">
-                选择 json 来源并指向数组路径；下方字段从数组每一项中读取
-              </p>
-            </div>
-          )}
-
-          {CARD_FIELDS.map((field) => (
-            <div key={field}>
-              <Label className="mb-1 block">
-                {field}
-                <span className="ml-1 font-normal text-muted-foreground">
-                  {rule.aggregate ? "（相对路径）" : "（来源:路径）"}
-                </span>
-              </Label>
-              <FieldRefInput
-                pathOnly={Boolean(rule.aggregate)}
-                value={rule.fields[field] ?? ""}
-                onChange={(v) =>
-                  updateRule(i, {
-                    fields: { ...rule.fields, [field]: v },
-                  })
-                }
-                placeholder={rule.aggregate ? "event" : "json:event.name"}
-              />
-            </div>
-          ))}
-        </section>
-      ))}
+            ))}
+          </section>
+        );
+      })}
     </div>
   );
 }

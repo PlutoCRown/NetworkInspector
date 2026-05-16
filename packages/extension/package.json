@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "bun test ./src/shared/pipeline.test.ts"
+    "test": "bun test ./src/shared/pipeline.test.ts ../../presets/src/parse-template.test.ts"
   },
   "dependencies": {
+    "@network-inspector/presets": "workspace:*",
     "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-popover": "^1.1.6",
     "@radix-ui/react-slot": "^1.1.2",

@@ -1,0 +1,48 @@
+export type FieldSource = "query" | "json" | "form-data" | "header";
+
+export type RendererId = "card" | "divider" | "custom";
+
+export interface AliasRule {
+  field: string;
+  match: string;
+  replace: string;
+}
+
+export interface HighlightRule {
+  field: string;
+  match: string;
+  tone: string;
+}
+
+export interface FilterRule {
+  field: string;
+  path: string;
+  equals?: unknown;
+  action: "drop" | "strip";
+}
+
+export interface Rule {
+  id: string;
+  url: string;
+  renderer: RendererId | string;
+  aggregate?: boolean;
+  aggregateFrom?: string;
+  fields: Record<string, string>;
+  alias?: AliasRule[];
+  highlights?: HighlightRule[];
+  filters?: FilterRule[];
+  decode?: string;
+  template?: string;
+}
+
+export interface RuleGroup {
+  version: number;
+  id: string;
+  name: string;
+  enabled: boolean;
+  sites: string[];
+  capture: string[];
+  rules: Rule[];
+  template?: string;
+  decode?: string;
+}

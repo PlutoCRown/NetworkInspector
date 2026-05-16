@@ -9,6 +9,7 @@
       "name": "@network-inspector/extension",
       "version": "0.1.0",
       "dependencies": {
+        "@network-inspector/presets": "workspace:*",
         "@radix-ui/react-label": "^2.1.2",
         "@radix-ui/react-popover": "^1.1.6",
         "@radix-ui/react-slot": "^1.1.2",
@@ -33,6 +34,10 @@
         "typescript": "^5.8.2",
         "vite": "^8.0.13",
       },
+    },
+    "packages/presets": {
+      "name": "@network-inspector/presets",
+      "version": "0.1.0",
     },
   },
   "packages": {
@@ -105,6 +110,8 @@
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.4", "", { "dependencies": { "@tybys/wasm-util": "^0.10.1" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-3NQNNgA1YSlJb/kMH1ildASP9HW7/7kYnRI2szWJaofaS1hWmbGI4H+d3+22aGzXXN9IJ+n+GiFVcGipJP18ow=="],
 
     "@network-inspector/extension": ["@network-inspector/extension@workspace:packages/extension"],
+
+    "@network-inspector/presets": ["@network-inspector/presets@workspace:packages/presets"],
 
     "@nodelib/fs.scandir": ["@nodelib/fs.scandir@2.1.5", "", { "dependencies": { "@nodelib/fs.stat": "2.0.5", "run-parallel": "^1.1.9" } }, "sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g=="],
 

@@ -24,11 +24,12 @@ export function getRendererFields(rendererId: string): string[] {
 
 export function defaultFieldsForRenderer(
   rendererId: string,
-  itemScope: boolean,
+  aggregate: boolean,
+  splitName = "item",
 ): Record<string, string> {
   const keys = getRendererFields(rendererId);
-  if (itemScope) {
-    return Object.fromEntries(keys.map((k) => [k, `[scope:item]${k}`]));
+  if (aggregate) {
+    return Object.fromEntries(keys.map((k) => [k, `[aggregate:${splitName}]${k}`]));
   }
   return Object.fromEntries(keys.map((k) => [k, `[source:json]${k}`]));
 }

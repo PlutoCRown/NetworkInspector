@@ -14,10 +14,12 @@
       "id": "rule-a1",
       "url": "data\\.a1\\.art",
       "renderer": "card",
-      "aggregateFrom": "[source:json][aggregate]",
+      "splits": {
+        "item": "[source:json]event"
+      },
       "fields": {
-        "title": "[scope:item]action",
-        "popover": "[scope:item]properties"
+        "title": "[aggregate:item]action",
+        "popover": "[aggregate:item]properties"
       }
     }
   ]

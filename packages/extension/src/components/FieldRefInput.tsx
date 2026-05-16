@@ -12,14 +12,14 @@ import { BUILTIN_PROCESSORS } from "@/shared/processors";
 import type { AppConfig, FieldSource } from "@/shared/types";
 import { cn } from "@/lib/utils";
 
-export type FieldRefInputMode = "aggregate-source" | "field";
+export type FieldRefInputMode = "split-source" | "field";
 
 interface FieldRefInputProps {
   value: string;
   onChange: (value: string) => void;
   mode: FieldRefInputMode;
-  /** 规则已配置聚合源时，字段默认从数组项读取 */
-  ruleHasAggregate?: boolean;
+  /** 聚合模式下可选的拆分名，用于 [aggregate:name] */
+  splitNames?: string[];
   config: AppConfig;
   placeholder?: string;
   className?: string;
@@ -56,7 +56,7 @@ export function FieldRefInput({
   value,
   onChange,
   mode,
-  ruleHasAggregate = false,
+  splitNames = [],
   config,
   placeholder,
   className,
@@ -67,8 +67,8 @@ export function FieldRefInput({
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const defaultPlaceholder =
-    mode === "aggregate-source"
-      ? "路径（如 data），+ 选择 json / response 等来源"
+    mode === "split-source"
+      ? "路径（如 items），+ 选择 json / response 等来源"
       : "固定文本或路径，+ 选择来源";
 
   useEffect(() => {
@@ -94,7 +94,7 @@ export function FieldRefInput({
   };
 
   const pickSource = (source: FieldSource) => {
-    commit({ ...expr, source, scope: "request" as const });
+    commit({ ...expr, source, splitRef: null, scope: "request" as const });
     setAddOpen(false);
   };
 
@@ -103,16 +103,12 @@ export function FieldRefInput({
     commit({ ...expr, path });
   };
 
-  const toggleAggregateTag = () => {
-    commit({ ...expr, aggregate: !expr.aggregate });
-  };
-
-  const setItemScope = () => {
+  const pickSplitRef = (name: string) => {
     commit({
       ...expr,
-      scope: "item",
+      splitRef: name,
       source: null,
-      aggregate: false,
+      scope: "item",
     });
     setAddOpen(false);
   };
@@ -128,10 +124,10 @@ export function FieldRefInput({
     setAddOpen(false);
   };
 
-  const showItemScope = mode === "field" && ruleHasAggregate;
   const hasSource = Boolean(expr.source);
-  const hasItemScope = expr.scope === "item";
-  const isLiteral = !hasSource && !hasItemScope;
+  const hasSplitRef = Boolean(expr.splitRef);
+  const isLiteral = !hasSource && !hasSplitRef;
+  const showSplitPicker = mode === "field" && splitNames.length > 0;
 
   const removeLastTag = () => {
     if (expr.aliasMap) {
@@ -142,11 +138,7 @@ export function FieldRefInput({
       commit({ ...expr, processors: expr.processors.slice(0, -1) });
       return;
     }
-    if (expr.aggregate && mode === "aggregate-source") {
-      commit({ ...expr, aggregate: false });
-      return;
-    }
-    if (hasItemScope || hasSource) {
+    if (hasSplitRef || hasSource) {
       commit(emptyFieldExpr("request"));
     }
   };
@@ -179,12 +171,11 @@ export function FieldRefInput({
         className,
       )}
     >
-      {hasItemScope && <Tag label="scope:item" tone="aggregate" />}
+      {hasSplitRef && (
+        <Tag label={`aggregate:${expr.splitRef}`} tone="aggregate" />
+      )}
       {hasSource && <Tag label={`source:${expr.source}`} tone="source" />}
       {isLiteral && pathDraft && <Tag label="固定文本" tone="default" />}
-      {expr.aggregate && mode === "aggregate-source" && (
-        <Tag label="aggregate" tone="aggregate" />
-      )}
 
       <input
         className="min-w-[80px] flex-1 bg-transparent py-0.5 text-xs font-mono outline-none placeholder:text-muted-foreground"
@@ -211,7 +202,7 @@ export function FieldRefInput({
         </Button>
         {addOpen && (
           <ul className="absolute right-0 z-50 mt-1 max-h-56 w-48 overflow-auto rounded-md border bg-popover py-1 shadow-md">
-            {!hasSource && !hasItemScope && (
+            {!hasSource && !hasSplitRef && (
               <>
                 <li className="px-3 py-1 text-[10px] font-medium text-muted-foreground">
                   数据来源
@@ -232,49 +223,33 @@ export function FieldRefInput({
                 ))}
               </>
             )}
-            {showItemScope && !hasItemScope && (
-              <li>
-                <button
-                  type="button"
-                  className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setItemScope();
-                  }}
-                >
-                  Aggregate（数组项内路径）
-                </button>
+            {showSplitPicker && !hasSplitRef && (
+              <>
+                <li className="px-3 py-1 text-[10px] font-medium text-muted-foreground">
+                  拆分项
+                </li>
+                {splitNames.map((name) => (
+                  <li key={name}>
+                    <button
+                      type="button"
+                      className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        pickSplitRef(name);
+                      }}
+                    >
+                      aggregate:{name}
+                    </button>
+                  </li>
+                ))}
+              </>
+            )}
+            {showSplitPicker && hasSource && !hasSplitRef && (
+              <li className="px-3 py-1 text-[10px] text-muted-foreground">
+                请求级字段请直接选来源；数组项字段请选 aggregate
               </li>
             )}
-            {mode === "aggregate-source" && hasSource && !expr.aggregate && (
-              <li>
-                <button
-                  type="button"
-                  className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    toggleAggregateTag();
-                  }}
-                >
-                  Aggregate（打散数组）
-                </button>
-              </li>
-            )}
-            {showItemScope && hasSource && !hasItemScope && (
-              <li>
-                <button
-                  type="button"
-                  className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setItemScope();
-                  }}
-                >
-                  改为 Aggregate 项内路径
-                </button>
-              </li>
-            )}
-            {(hasSource || hasItemScope) && (
+            {(hasSource || hasSplitRef) && (
               <li className="px-3 py-1 text-[10px] font-medium text-muted-foreground">
                 后处理
               </li>
@@ -307,7 +282,7 @@ export function FieldRefInput({
                 </button>
               </li>
             ))}
-            {aliasOptions.length === 0 && (hasSource || hasItemScope) && (
+            {aliasOptions.length === 0 && (hasSource || hasSplitRef) && (
               <li className="px-3 py-1.5 text-[10px] text-muted-foreground">
                 请先在全局配置中添加 Alias 表
               </li>

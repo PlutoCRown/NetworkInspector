@@ -26,8 +26,8 @@ export interface Rule {
   /** 与 capture[] 同索引对应 */
   url: string;
   renderer: RendererId;
-  /** 聚合数组来源，如 [source:json]items[aggregate] */
-  aggregateFrom?: string;
+  /** 拆分名 → 数组来源表达式，如 { item: "[source:json]events" } */
+  splits?: Record<string, string>;
   fields: Record<string, string>;
   alias?: AliasRule[];
   highlights?: HighlightRule[];

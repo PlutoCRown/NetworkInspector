@@ -2,27 +2,15 @@ import { createEmptyRule } from "./create-empty-rule";
 import { normalizeRendererId } from "./renderer-registry";
 import type { RuleGroup } from "./types";
 
-/** 保证 capture 与 rules 一一对应，并同步 url / renderer */
+/** 从 rules 派生 capture，并规范化 renderer */
 export function normalizeRuleGroup(group: RuleGroup): RuleGroup {
-  const capture = [...group.capture];
-  let rules = [...group.rules];
+  let rules = group.rules.length ? [...group.rules] : [createEmptyRule("/api/")];
 
-  while (rules.length < capture.length) {
-    const url = capture[rules.length] ?? "/api/";
-    rules.push(createEmptyRule(url));
-  }
-  while (capture.length < rules.length) {
-    capture.push(rules[capture.length]?.url ?? "/api/");
-  }
+  rules = rules.map((rule) => ({
+    ...rule,
+    renderer: normalizeRendererId(rule.renderer),
+  }));
 
-  rules = rules.map((rule, i) => {
-    const renderer = normalizeRendererId(rule.renderer);
-    return {
-      ...rule,
-      url: capture[i] ?? rule.url,
-      renderer,
-    };
-  });
-
+  const capture = rules.map((r) => r.url);
   return { ...group, capture, rules };
 }

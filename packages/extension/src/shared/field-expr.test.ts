@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { hasAggregateSource, parseFieldExpr, serializeFieldExpr } from "./field-expr";
+import { parseFieldExpr, ruleHasSplits, serializeFieldExpr } from "./field-expr";
 
 describe("field-expr", () => {
   test("parses bracket source path processor alias", () => {
@@ -13,20 +13,17 @@ describe("field-expr", () => {
     );
   });
 
-  test("parses aggregate source", () => {
-    const raw = "[source:json]data[aggregate]";
-    const expr = parseFieldExpr(raw);
-    expect(expr.source).toBe("json");
-    expect(expr.path).toBe("data");
-    expect(expr.aggregate).toBe(true);
-    expect(hasAggregateSource(raw)).toBe(true);
+  test("parses aggregate split ref", () => {
+    const expr = parseFieldExpr("[aggregate:item]action");
+    expect(expr.splitRef).toBe("item");
+    expect(expr.path).toBe("action");
+    expect(serializeFieldExpr(expr)).toBe("[aggregate:item]action");
   });
 
-  test("parses item scope with processor", () => {
-    const expr = parseFieldExpr("[scope:item]time[processor:date]");
-    expect(expr.scope).toBe("item");
-    expect(expr.path).toBe("time");
-    expect(serializeFieldExpr(expr)).toBe("[scope:item]time[processor:date]");
+  test("parses split source expression", () => {
+    const expr = parseFieldExpr("[source:json]0.events");
+    expect(expr.source).toBe("json");
+    expect(expr.path).toBe("0.events");
   });
 
   test("bare string is literal fixed text", () => {
@@ -34,5 +31,10 @@ describe("field-expr", () => {
     expect(expr.source).toBeNull();
     expect(expr.path).toBe("页面浏览");
     expect(serializeFieldExpr(expr)).toBe("页面浏览");
+  });
+
+  test("ruleHasSplits", () => {
+    expect(ruleHasSplits({ splits: { item: "[source:json]x" } })).toBe(true);
+    expect(ruleHasSplits({})).toBe(false);
   });
 });

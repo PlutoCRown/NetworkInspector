@@ -19,7 +19,7 @@ const GROUP: RuleGroup = {
       url: "/api",
       renderer: "card",
       fields: {
-        title: "[scope:item]event[processor:customFn][alias:ev]",
+        title: "[aggregate:item]event[processor:customFn][alias:ev]",
       },
     },
   ],

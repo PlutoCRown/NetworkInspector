@@ -21,7 +21,7 @@
 | `id` | string | 是 | 规则块 ID |
 | `url` | string | 是 | 与 `capture[]` 对应索引的 URL 正则 |
 | `renderer` | string | 是 | `card` \| `divider` |
-| `aggregateFrom` | string | 否 | 聚合数组来源，如 `[source:json]items[aggregate]` |
+| `splits` | Record<string, string> | 否 | 拆分名 → 数组来源，如 `{ "item": "[source:json]events" }` |
 | `fields` | Record<string, string> | 是 | 字段名 → 字段表达式 |
 | `alias` | AliasRule[] | 否 | 见 [08](./08-post-processing.md) |
 | `highlights` | HighlightRule[] | 否 | 见 [08](./08-post-processing.md) |
@@ -38,7 +38,7 @@
 
 ```
 [source:json]action[processor:time][alias:mapkey]
-[scope:item]event
+[aggregate:item]action
 [source:json]data[aggregate]
 页面浏览
 ```
@@ -46,7 +46,7 @@
 | 片段 | 含义 |
 |------|------|
 | `[source:json]` | 数据来源：json / response / query / form-data / header |
-| `[scope:item]` | 聚合模式下当前数组项 |
+| `[aggregate:name]` | 从 `splits` 中对应拆分的当前数组项取值 |
 | `[aggregate]` | 将来源路径解析为数组并逐条渲染 |
 | `[processor:id]` | 内置或自定义 Processor |
 | `[alias:mapkey]` | 全局 Alias 组（mapkey 自动生成） |

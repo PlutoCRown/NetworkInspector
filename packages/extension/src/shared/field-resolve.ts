@@ -5,14 +5,16 @@ import { getByPath } from "./path";
 import { applyAliasMap, runProcessors } from "./processors";
 import type { AppConfig } from "./types";
 
+export type SplitContext = Record<string, unknown>;
+
 export function resolveFieldExpr(
   raw: string,
   input: ExtractInput,
-  item: unknown | null,
+  splitContext: SplitContext | null,
   config: AppConfig,
 ): unknown {
   const expr = parseFieldExpr(raw);
-  const rawValue = readRawValue(expr, input, item);
+  const rawValue = readRawValue(expr, input, splitContext);
   const processed = runProcessors(rawValue, expr.processors, config);
   return applyAliasMap(processed, expr.aliasMap, config);
 }
@@ -20,9 +22,18 @@ export function resolveFieldExpr(
 function readRawValue(
   expr: FieldExpr,
   input: ExtractInput,
-  item: unknown | null,
+  splitContext: SplitContext | null,
 ): unknown {
+  if (expr.splitRef) {
+    const item = splitContext?.[expr.splitRef];
+    if (item == null) return null;
+    if (!expr.path) return item;
+    return getByPath(item, expr.path);
+  }
+
   if (expr.scope === "item") {
+    const item = splitContext?.[Object.keys(splitContext ?? {})[0] ?? ""];
+    if (item == null) return null;
     if (!expr.path) return item;
     return getByPath(item, expr.path);
   }
@@ -31,19 +42,18 @@ function readRawValue(
     return extractFromSource(input, expr.source, expr.path);
   }
 
-  // 无来源标签：path 为固定文本
   if (expr.path) return expr.path;
 
   return null;
 }
 
-export function resolveAggregateArray(
-  aggregateFrom: string,
+export function resolveSplitArray(
+  splitExpr: string,
   input: ExtractInput,
 ): unknown[] | null {
-  const expr = parseFieldExpr(aggregateFrom);
+  const expr = parseFieldExpr(splitExpr);
   const value = readRawValue(
-    { ...expr, scope: "request", aggregate: false },
+    { ...expr, splitRef: null, scope: "request" },
     input,
     null,
   );

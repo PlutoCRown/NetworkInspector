@@ -27,7 +27,9 @@ export function collectFieldRefIdsFromRuleGroup(group: RuleGroup): FieldRefIds {
   const aliases = new Set<string>();
 
   for (const rule of group.rules) {
-    if (rule.aggregateFrom) collectFromFieldRaw(rule.aggregateFrom, processors, aliases);
+    for (const ref of Object.values(rule.splits ?? {})) {
+      if (ref) collectFromFieldRaw(ref, processors, aliases);
+    }
     for (const ref of Object.values(rule.fields)) {
       if (ref) collectFromFieldRaw(ref, processors, aliases);
     }

@@ -1,7 +1,8 @@
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { createEmptyRule } from "@/shared/create-empty-rule";
 import { normalizeRuleGroup } from "@/shared/normalize-rule-group";
 import type { AppConfig, Rule, RuleGroup } from "@/shared/types";
-import { CaptureUrlsSection } from "./form/CaptureUrlsSection";
 import { GroupMetaSection } from "./form/GroupMetaSection";
 import { RuleBlockSection } from "./form/RuleBlockSection";
 
@@ -18,30 +19,21 @@ export function RuleGroupForm({ group, config, onChange }: RuleGroupFormProps) {
     onChange(normalizeRuleGroup({ ...g, ...patch }));
   };
 
-  const updateCaptureUrl = (index: number, url: string) => {
-    const capture = [...g.capture];
-    capture[index] = url;
-    const rules = g.rules.map((r, i) => (i === index ? { ...r, url } : r));
-    onChange(normalizeRuleGroup({ ...g, capture, rules }));
-  };
-
-  const addCaptureRule = () => {
+  const addRule = () => {
     const url = "/api/";
     onChange(
       normalizeRuleGroup({
         ...g,
-        capture: [...g.capture, url],
         rules: [...g.rules, createEmptyRule(url)],
       }),
     );
   };
 
-  const removeCaptureRule = (index: number) => {
-    if (g.capture.length <= 1) return;
+  const removeRule = (index: number) => {
+    if (g.rules.length <= 1) return;
     onChange(
       normalizeRuleGroup({
         ...g,
-        capture: g.capture.filter((_, i) => i !== index),
         rules: g.rules.filter((_, i) => i !== index),
       }),
     );
@@ -56,22 +48,21 @@ export function RuleGroupForm({ group, config, onChange }: RuleGroupFormProps) {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <GroupMetaSection group={g} onChange={setGroup} />
-      <CaptureUrlsSection
-        group={g}
-        onAdd={addCaptureRule}
-        onUpdateUrl={updateCaptureUrl}
-        onRemove={removeCaptureRule}
-      />
       {g.rules.map((rule, i) => (
         <RuleBlockSection
           key={rule.id}
           rule={rule}
           index={i}
-          captureUrl={g.capture[i] ?? ""}
+          canRemove={g.rules.length > 1}
           config={config}
           onUpdate={(patch) => updateRule(i, patch)}
+          onRemove={() => removeRule(i)}
         />
       ))}
+      <Button type="button" variant="outline" className="w-full" onClick={addRule}>
+        <Plus className="mr-2 h-4 w-4" />
+        新增规则
+      </Button>
     </div>
   );
 }

@@ -1,6 +1,5 @@
-import { extractFields } from "./extract";
-import { hasAggregateSource } from "./field-expr";
-import { resolveAggregateArray, resolveFieldExpr } from "./field-resolve";
+import { ruleHasSplits } from "./field-expr";
+import { resolveFieldExpr, resolveSplitArray, type SplitContext } from "./field-resolve";
 import { matchesAny } from "./regex";
 import { normalizeRuleGroup } from "./normalize-rule-group";
 import { applyAlias, applyFilters, resolveHighlight } from "./post-process";
@@ -36,12 +35,12 @@ function findRuleIndex(group: RuleGroup, requestUrl: string): number {
 function extractFieldsWithConfig(
   fields: Record<string, string>,
   input: ExtractInput,
-  item: unknown | null,
+  splitContext: SplitContext | null,
   config: AppConfig,
 ): Record<string, unknown> {
   const data: Record<string, unknown> = {};
   for (const [key, ref] of Object.entries(fields)) {
-    data[key] = resolveFieldExpr(ref, input, item, config);
+    data[key] = resolveFieldExpr(ref, input, splitContext, config);
   }
   return data;
 }
@@ -72,6 +71,40 @@ function buildRecord(
   };
 }
 
+function processSplitCaptures(
+  group: RuleGroup,
+  rule: Rule,
+  payload: RawRequestPayload,
+  input: ExtractInput,
+  config: AppConfig,
+): CaptureRecord[] | null {
+  const splits = rule.splits!;
+  const splitEntries = Object.entries(splits);
+  const arrays: Record<string, unknown[]> = {};
+
+  for (const [name, expr] of splitEntries) {
+    const arr = resolveSplitArray(expr, input);
+    if (!arr?.length) return null;
+    arrays[name] = arr;
+  }
+
+  const primaryName = splitEntries[0]![0];
+  const primaryArr = arrays[primaryName]!;
+  const records: CaptureRecord[] = [];
+
+  for (let i = 0; i < primaryArr.length; i++) {
+    const splitContext: SplitContext = {};
+    for (const [name, arr] of Object.entries(arrays)) {
+      splitContext[name] = arr[i] ?? arr[0];
+    }
+    const rawData = extractFieldsWithConfig(rule.fields, input, splitContext, config);
+    const record = buildRecord(group, rule, payload, rawData, rawData);
+    if (record) records.push(record);
+  }
+
+  return records.length ? records : null;
+}
+
 function processRuleCapture(
   group: RuleGroup,
   rule: Rule,
@@ -85,20 +118,8 @@ function processRuleCapture(
     responseBody: payload.responseBody,
   };
 
-  const aggregateFrom = rule.aggregateFrom ?? "";
-  const useAggregate = hasAggregateSource(aggregateFrom);
-
-  if (useAggregate && aggregateFrom) {
-    const arr = resolveAggregateArray(aggregateFrom, input);
-    if (!arr) return null;
-
-    const records: CaptureRecord[] = [];
-    for (const item of arr) {
-      const rawData = extractFieldsWithConfig(rule.fields, input, item, config);
-      const record = buildRecord(group, rule, payload, rawData, rawData);
-      if (record) records.push(record);
-    }
-    return records.length ? records : null;
+  if (ruleHasSplits(rule)) {
+    return processSplitCaptures(group, rule, payload, input, config);
   }
 
   const rawData = extractFieldsWithConfig(rule.fields, input, null, config);

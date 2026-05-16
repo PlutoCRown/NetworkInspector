@@ -8,7 +8,8 @@ export interface FieldExpr {
   scope: FieldScope;
   source: FieldSource | null;
   path: string;
-  aggregate: boolean;
+  /** 字段引用拆分项，如 [aggregate:item] */
+  splitRef: string | null;
   processors: string[];
   aliasMap: string | null;
 }
@@ -21,6 +22,8 @@ export interface FieldExprTagOption {
 
 const TAG_RE = /\[([^\]]+)\]/g;
 
+export const DEFAULT_SPLIT_NAME = "item";
+
 function bracketTag(kind: string, value?: string): string {
   return value !== undefined && value !== "" ? `[${kind}:${value}]` : `[${kind}]`;
 }
@@ -30,7 +33,7 @@ export function emptyFieldExpr(scope: FieldScope = "request"): FieldExpr {
     scope,
     source: null,
     path: "",
-    aggregate: false,
+    splitRef: null,
     processors: [],
     aliasMap: null,
   };
@@ -45,10 +48,10 @@ function applyTag(expr: FieldExpr, kind: string, value: string) {
       }
       break;
     case "scope":
-      if (value === "item") expr.scope = "item";
+      if (value === "item") expr.splitRef = DEFAULT_SPLIT_NAME;
       break;
     case "aggregate":
-      expr.aggregate = true;
+      if (value) expr.splitRef = value;
       break;
     case "processor":
       if (value) expr.processors.push(value);
@@ -61,7 +64,7 @@ function applyTag(expr: FieldExpr, kind: string, value: string) {
   }
 }
 
-/** 存储格式：[source:json]action[processor:time][alias:mapkey] */
+/** 存储格式：[source:json]action[processor:time][alias:mapkey] 或 [aggregate:item]path */
 export function parseFieldExpr(raw: string): FieldExpr {
   const trimmed = raw.trim();
   if (!trimmed) return emptyFieldExpr();
@@ -90,14 +93,14 @@ export function parseFieldExpr(raw: string): FieldExpr {
   const tail = trimmed.slice(lastIndex);
   if (tail) pathParts.push(tail);
   expr.path = pathParts.join("");
+  if (expr.splitRef) expr.scope = "item";
   return expr;
 }
 
 export function serializeFieldExpr(expr: FieldExpr): string {
   if (
     !expr.source &&
-    expr.scope !== "item" &&
-    !expr.aggregate &&
+    !expr.splitRef &&
     expr.processors.length === 0 &&
     !expr.aliasMap
   ) {
@@ -105,25 +108,23 @@ export function serializeFieldExpr(expr: FieldExpr): string {
   }
 
   let out = "";
-  if (expr.scope === "item") {
-    out += bracketTag("scope", "item");
+  if (expr.splitRef) {
+    out += bracketTag("aggregate", expr.splitRef);
   } else if (expr.source) {
     out += bracketTag("source", expr.source);
   }
   out += expr.path;
-  if (expr.aggregate) out += bracketTag("aggregate");
   for (const p of expr.processors) out += bracketTag("processor", p);
   if (expr.aliasMap) out += bracketTag("alias", expr.aliasMap);
   return out;
 }
 
-export function isAggregateSourceExpr(expr: FieldExpr): boolean {
-  return expr.aggregate && expr.scope === "request" && Boolean(expr.source);
+export function ruleHasSplits(rule: { splits?: Record<string, string> }): boolean {
+  return Boolean(rule.splits && Object.keys(rule.splits).length > 0);
 }
 
-export function hasAggregateSource(raw: string | undefined): boolean {
-  if (!raw?.trim()) return false;
-  return isAggregateSourceExpr(parseFieldExpr(raw));
+export function getSplitNames(rule: { splits?: Record<string, string> }): string[] {
+  return Object.keys(rule.splits ?? {});
 }
 
 export const SOURCE_TAG_OPTIONS: FieldExprTagOption[] = SOURCES.map((id) => ({

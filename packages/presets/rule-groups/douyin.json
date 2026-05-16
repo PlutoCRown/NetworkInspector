@@ -14,10 +14,12 @@
       "id": "rule-douyin-list",
       "url": "mcs.zijieapi.com/list",
       "renderer": "card",
-      "aggregateFrom": "[source:json]0.events[aggregate]",
+      "splits": {
+        "item": "[source:json]0.events"
+      },
       "fields": {
-        "title": "[scope:item]event",
-        "popover": "[scope:item]params"
+        "title": "[aggregate:item]event",
+        "popover": "[aggregate:item]params"
       }
     }
   ]

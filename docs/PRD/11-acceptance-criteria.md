@@ -4,7 +4,7 @@
 
 - [ ] 默认 Demo 规则组（A1.art、DOUYIN）加载并捕获
 - [ ] 字段表达式 `[source:json]event` 正确取值
-- [ ] 聚合 `[source:json]items[aggregate]` + `[scope:item]name` 多条卡片
+- [ ] 聚合 `splits` + `[aggregate:item]name` 多条卡片
 - [ ] 固定文本字段原样展示
 - [ ] `[processor:time]`、`[alias:mapkey]` 生效
 

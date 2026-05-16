@@ -34,7 +34,7 @@ export interface ExtractInput {
 
 function parseExtractRef(ref: string): { source: FieldSource; path: string } | null {
   const expr = parseFieldExpr(ref);
-  if (expr.scope === "item" || !expr.source) return null;
+  if (expr.splitRef || !expr.source) return null;
   return { source: expr.source, path: expr.path };
 }
 
@@ -56,8 +56,7 @@ export function extractFromSource(
       return key ? headers[key] : null;
     }
     case "json": {
-      const json =
-        parseJsonBody(input.responseBody) ?? parseJsonBody(input.requestBody);
+      const json = parseJsonBody(input.requestBody);
       if (json == null) return null;
       return path ? getByPath(json, path) : json;
     }

@@ -39,4 +39,14 @@ export const EXAMPLE_PROCESSORS: CustomProcessorConfig = {
   const p = (x) => String(x).padStart(2, "0");
   return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
 }`,
+  JSONParser: `(value) => {
+  if (typeof value !== "string") return value;
+  const s = value.trim();
+  if (!s) return value;
+  try {
+    return JSON.parse(s);
+  } catch {
+    return value;
+  }
+}`,
 };

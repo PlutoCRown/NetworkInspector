@@ -9,5 +9,8 @@
     "isolatedModules": true,
     "resolveJsonModule": true
   },
-  "include": ["src", "rule-groups"]
+  "include": [
+    "src",
+    "example.json"
+  ]
 }

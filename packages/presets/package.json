@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./rule-groups/*": "./rule-groups/*"
+    ".": "./src/index.ts"
   }
 }

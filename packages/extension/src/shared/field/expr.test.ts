@@ -20,6 +20,18 @@ describe("field-expr", () => {
     expect(serializeFieldExpr(expr)).toBe("[aggregate:item]action");
   });
 
+  test("bare [aggregate] defaults to item split name", () => {
+    const expr = parseFieldExpr("[aggregate]action");
+    expect(expr.splitRef).toBe("item");
+    expect(serializeFieldExpr(expr)).toBe("[aggregate:item]action");
+  });
+
+  test("does not parse legacy [scope:item] tag", () => {
+    const expr = parseFieldExpr("[scope:item]action");
+    expect(expr.splitRef).toBeNull();
+    expect(expr.path).toBe("action");
+  });
+
   test("parses split source expression", () => {
     const expr = parseFieldExpr("[source:json]0.events");
     expect(expr.source).toBe("json");

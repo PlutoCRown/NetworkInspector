@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": 1778971053481,
+  "exportedAt": 1778973360687,
   "extensionVersion": "0.1.0",
   "ruleGroups": [
     {
@@ -38,16 +38,20 @@
       ],
       "enabled": true,
       "id": "group-1778944597173",
-      "name": "DOUYIN",
+      "name": "抖音测试用",
       "rules": [
         {
           "aggregate": true,
-          "aggregateFrom": "json:0.events",
           "fields": {
-            "title": "event"
+            "desc": "[aggregate:item]session_id",
+            "expand": "[aggregate:item]params[processor:JSONParser]",
+            "title": "[aggregate:item]event"
           },
           "id": "rule-1778944597173",
           "renderer": "card",
+          "splits": {
+            "item": "[source:json]0.events"
+          },
           "url": "mcs.zijieapi.com/list"
         }
       ],
@@ -61,7 +65,8 @@
     "customProcessors": {
       "time": "(value) => {\n  const n = Number(value);\n  const ms =\n    typeof value === \"number\"\n      ? n < 1e12\n        ? n * 1000\n        : n\n      : Date.parse(String(value));\n  const d = new Date(ms);\n  if (Number.isNaN(d.getTime())) return String(value ?? \"\");\n  const p = (x) => String(x).padStart(2, \"0\");\n  return p(d.getHours()) + \":\" + p(d.getMinutes()) + \":\" + p(d.getSeconds());\n}",
       "datetime": "(value) => {\n  const n = Number(value);\n  const ms =\n    typeof value === \"number\"\n      ? n < 1e12\n        ? n * 1000\n        : n\n      : Date.parse(String(value));\n  const d = new Date(ms);\n  return Number.isNaN(d.getTime()) ? String(value ?? \"\") : d.toLocaleString();\n}",
-      "date": "(value) => {\n  const n = Number(value);\n  const ms =\n    typeof value === \"number\"\n      ? n < 1e12\n        ? n * 1000\n        : n\n      : Date.parse(String(value));\n  const d = new Date(ms);\n  if (Number.isNaN(d.getTime())) return String(value ?? \"\");\n  const p = (x) => String(x).padStart(2, \"0\");\n  return d.getFullYear() + \"-\" + p(d.getMonth() + 1) + \"-\" + p(d.getDate());\n}"
+      "date": "(value) => {\n  const n = Number(value);\n  const ms =\n    typeof value === \"number\"\n      ? n < 1e12\n        ? n * 1000\n        : n\n      : Date.parse(String(value));\n  const d = new Date(ms);\n  if (Number.isNaN(d.getTime())) return String(value ?? \"\");\n  const p = (x) => String(x).padStart(2, \"0\");\n  return d.getFullYear() + \"-\" + p(d.getMonth() + 1) + \"-\" + p(d.getDate());\n}",
+      "JSONParser": "(value) => {\n  if (typeof value !== \"string\") return value;\n  const s = value.trim();\n  if (!s) return value;\n  try {\n    return JSON.parse(s);\n  } catch {\n    return value;\n  }\n}"
     },
     "aliasMaps": {
       "alias-mp8wdf0c": {
@@ -70,5 +75,5 @@
       }
     }
   },
-  "activeRuleGroupId": "acme-analytics-2026"
+  "activeRuleGroupId": "group-1778944597173"
 }

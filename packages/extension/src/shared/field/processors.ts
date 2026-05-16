@@ -1,3 +1,4 @@
+import { compileProcessor } from "./processor-compile";
 import type { AppConfig } from "../types";
 
 export function runProcessors(
@@ -16,8 +17,9 @@ export function runProcessor(value: unknown, id: string, config: AppConfig): unk
   const source = config.customProcessors[id];
   if (!source?.trim()) return value;
 
+  const fn = compileProcessor(source);
+  if (!fn) return value;
   try {
-    const fn = new Function("value", `return (${source})(value);`) as (v: unknown) => unknown;
     return fn(value);
   } catch {
     return value;

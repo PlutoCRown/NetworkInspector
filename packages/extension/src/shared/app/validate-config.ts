@@ -1,18 +1,10 @@
+import { isProcessorBodyValid } from "../field/processor-compile";
 import type { AppConfig } from "../types";
+
+export { isProcessorBodyValid } from "../field/processor-compile";
 
 export function isProcessorIdValid(id: string): boolean {
   return id.trim().length > 0;
-}
-
-export function isProcessorBodyValid(body: string): boolean {
-  const source = body.trim();
-  if (!source) return false;
-  try {
-    new Function("value", `return (${source})(value);`);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 /** 保存前校验；编辑过程中允许草稿无效 */

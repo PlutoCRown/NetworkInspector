@@ -43,7 +43,6 @@ export {
   SOURCE_TAG_OPTIONS,
   type FieldExpr,
   type FieldExprTagOption,
-  type FieldScope,
 } from "./field/expr";
 export { extractField, extractFields, extractFromSource, type ExtractInput } from "./field/extract";
 export {

@@ -31,7 +31,7 @@ export function ProcessorSection({
   if (!processorId || !(processorId in config.customProcessors)) {
     return (
       <p className="text-sm text-muted-foreground">
-        在左侧选择处理器，或新建一个。示例（time / date / datetime）可直接编辑或删除。
+        在左侧选择处理器，或新建一个。示例（time / date / datetime / JSONParser）可直接编辑或删除。
       </p>
     );
   }

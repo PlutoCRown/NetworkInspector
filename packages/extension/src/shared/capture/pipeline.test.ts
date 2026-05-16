@@ -53,7 +53,7 @@ describe("processCapture", () => {
         url: "https://app.acme.io/v1/events",
         method: "POST",
         tabUrl: "https://app.acme.io/",
-        responseBody: JSON.stringify({
+        requestBody: JSON.stringify({
           event: "page_view",
           properties: { debug: true },
         }),
@@ -71,7 +71,7 @@ describe("processCapture", () => {
           url: "https://app.acme.io/v1/events",
           method: "POST",
           tabUrl: "https://app.acme.io/",
-          responseBody: JSON.stringify({
+          requestBody: JSON.stringify({
             event: "page_view",
             properties: { ok: 1 },
           }),
@@ -103,7 +103,7 @@ describe("processCapture", () => {
           url: "https://app.acme.io/v1/single",
           method: "POST",
           tabUrl: "https://app.acme.io/",
-          responseBody: JSON.stringify({
+          requestBody: JSON.stringify({
             event: { action: "click", module: "home" },
           }),
         },
@@ -136,7 +136,7 @@ describe("processCapture", () => {
         url: "https://app.acme.io/v1/batch",
         method: "POST",
         tabUrl: "https://app.acme.io/",
-        responseBody: JSON.stringify({
+        requestBody: JSON.stringify({
           meta: { source: "web" },
           items: [{ name: "a" }, { name: "b" }],
         }),
@@ -172,7 +172,7 @@ describe("processCapture", () => {
         url: "https://app.acme.io/v1/batch",
         method: "POST",
         tabUrl: "https://app.acme.io/",
-        responseBody: JSON.stringify([{ event: "x", time: 1715929200 }]),
+        requestBody: JSON.stringify([{ event: "x", time: 1715929200 }]),
       },
       CFG,
     );
@@ -200,7 +200,7 @@ describe("processCapture", () => {
         url: "https://app.acme.io/v1/batch",
         method: "POST",
         tabUrl: "https://app.acme.io/",
-        responseBody: JSON.stringify([{ event: "page_view" }]),
+        requestBody: JSON.stringify([{ event: "page_view" }]),
       },
       {
         ...CFG,
@@ -219,7 +219,7 @@ describe("processCapture", () => {
           url: "https://app.acme.io/v1/beacon?action=click&module=home",
           method: "POST",
           tabUrl: "https://app.acme.io/",
-          responseBody: JSON.stringify({ _internal: true, data: { ok: 1 } }),
+          requestBody: JSON.stringify({ _internal: true, data: { ok: 1 } }),
         },
         CFG,
       ),

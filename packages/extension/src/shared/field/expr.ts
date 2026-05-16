@@ -2,10 +2,7 @@ import type { FieldSource } from "../types";
 
 const SOURCES: FieldSource[] = ["query", "json", "response", "form-data", "header"];
 
-export type FieldScope = "request" | "item";
-
 export interface FieldExpr {
-  scope: FieldScope;
   source: FieldSource | null;
   path: string;
   /** 字段引用拆分项，如 [aggregate:item] */
@@ -28,9 +25,8 @@ function bracketTag(kind: string, value?: string): string {
   return value !== undefined && value !== "" ? `[${kind}:${value}]` : `[${kind}]`;
 }
 
-export function emptyFieldExpr(scope: FieldScope = "request"): FieldExpr {
+export function emptyFieldExpr(): FieldExpr {
   return {
-    scope,
     source: null,
     path: "",
     splitRef: null,
@@ -44,14 +40,12 @@ function applyTag(expr: FieldExpr, kind: string, value: string) {
     case "source":
       if (SOURCES.includes(value as FieldSource)) {
         expr.source = value as FieldSource;
-        expr.scope = "request";
+        expr.splitRef = null;
       }
       break;
-    case "scope":
-      if (value === "item") expr.splitRef = DEFAULT_SPLIT_NAME;
-      break;
     case "aggregate":
-      if (value) expr.splitRef = value;
+      expr.splitRef = value || DEFAULT_SPLIT_NAME;
+      expr.source = null;
       break;
     case "processor":
       if (value) expr.processors.push(value);
@@ -93,7 +87,6 @@ export function parseFieldExpr(raw: string): FieldExpr {
   const tail = trimmed.slice(lastIndex);
   if (tail) pathParts.push(tail);
   expr.path = pathParts.join("");
-  if (expr.splitRef) expr.scope = "item";
   return expr;
 }
 

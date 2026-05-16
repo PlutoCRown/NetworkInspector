@@ -140,13 +140,13 @@ export function FieldRefInput({
   }, [pathDraft, showAutocomplete]);
 
   const pickSource = (source: FieldSource) => {
-    commit({ ...expr, source, splitRef: null, scope: "request" });
+    commit({ ...expr, source, splitRef: null });
     setMenuOpen(false);
     setSlashActive(false);
   };
 
   const pickSplitRef = (name: string) => {
-    commit({ ...expr, splitRef: name, source: null, scope: "item" });
+    commit({ ...expr, splitRef: name, source: null });
     setMenuOpen(false);
     setSlashActive(false);
   };
@@ -173,7 +173,7 @@ export function FieldRefInput({
 
   const clearAlias = () => commit({ ...expr, aliasMap: null });
 
-  const clearPrefix = () => commit(emptyFieldExpr("request"));
+  const clearPrefix = () => commit(emptyFieldExpr());
 
   const setPath = (path: string) => {
     const seg = parseSlashSegment(path);
@@ -202,10 +202,10 @@ export function FieldRefInput({
 
     switch (action.kind) {
       case "source":
-        next = { ...next, source: action.source, splitRef: null, scope: "request" as const };
+        next = { ...next, source: action.source, splitRef: null };
         break;
       case "aggregate":
-        next = { ...next, splitRef: action.name, source: null, scope: "item" as const };
+        next = { ...next, splitRef: action.name, source: null };
         break;
       case "processor":
         if (!next.processors.includes(action.processorId)) {

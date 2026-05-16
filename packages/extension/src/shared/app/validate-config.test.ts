@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { EXAMPLE_PROCESSORS } from "../field/processor-examples";
 import {
   isProcessorBodyValid,
   validateAppConfigForSave,
@@ -12,6 +13,13 @@ describe("validate-config", () => {
 
   test("valid processor body", () => {
     expect(isProcessorBodyValid("(value) => value")).toBe(true);
+    expect(isProcessorBodyValid("(value) => value;")).toBe(true);
+  });
+
+  test("example processors are valid", () => {
+    for (const body of Object.values(EXAMPLE_PROCESSORS)) {
+      expect(isProcessorBodyValid(body)).toBe(true);
+    }
   });
 
   test("invalid processor body syntax", () => {

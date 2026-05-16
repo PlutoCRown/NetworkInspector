@@ -31,13 +31,6 @@ function readRawValue(
     return getByPath(item, expr.path);
   }
 
-  if (expr.scope === "item") {
-    const item = splitContext?.[Object.keys(splitContext ?? {})[0] ?? ""];
-    if (item == null) return null;
-    if (!expr.path) return item;
-    return getByPath(item, expr.path);
-  }
-
   if (expr.source) {
     return extractFromSource(input, expr.source, expr.path);
   }
@@ -59,10 +52,6 @@ export function resolveSplitArray(
   input: ExtractInput,
 ): unknown[] | null {
   const expr = parseFieldExpr(splitExpr);
-  const value = readRawValue(
-    { ...expr, splitRef: null, scope: "request" },
-    input,
-    null,
-  );
+  const value = readRawValue({ ...expr, splitRef: null }, input, null);
   return coerceSplitItems(value);
 }

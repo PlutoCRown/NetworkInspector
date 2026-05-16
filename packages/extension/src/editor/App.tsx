@@ -9,6 +9,7 @@ import { message } from "@/lib/message";
 import { createEmptyRule } from "@/shared/rule/create-empty";
 import { normalizeRuleGroup } from "@/shared/rule/normalize";
 import type { AppConfig, RuleGroup } from "@/shared/types";
+import { validateAppConfigForSave } from "@/shared/app/validate-config";
 import { DEFAULT_APP_CONFIG } from "@/shared/types";
 import { EditorSidebar, type EditorNavSection } from "./EditorSidebar";
 import { AboutSection } from "./form/AboutSection";
@@ -119,6 +120,11 @@ export function EditorApp() {
   }
 
   const saveConfig = async () => {
+    const errors = validateAppConfigForSave(config);
+    if (errors.length > 0) {
+      message.error(errors[0]!);
+      return;
+    }
     await sendMessage({ type: "SAVE_APP_CONFIG", config });
     await refresh();
     message.success("已保存");
@@ -304,12 +310,7 @@ export function EditorApp() {
           <ProcessorSection
             config={config}
             processorId={selectedProcessorId}
-            onChange={(next) => {
-              setConfigDraft(next);
-              if (selectedProcessorId && !(selectedProcessorId in next.customProcessors)) {
-                setSelectedProcessorId(Object.keys(next.customProcessors)[0] ?? null);
-              }
-            }}
+            onChange={setConfigDraft}
             onRemove={removeProcessor}
             onIdChange={setSelectedProcessorId}
           />

@@ -5,7 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { message } from "@/lib/message";
+import { cn } from "@/lib/utils";
 import type { AliasMapGroup, AppConfig } from "@/shared/types";
+
+const invalidFieldClass =
+  "border-destructive focus-visible:ring-destructive aria-invalid:border-destructive";
 
 export function newAliasMapkey(): string {
   return `alias-${Date.now().toString(36)}`;
@@ -101,17 +105,23 @@ function AliasMapGroupCard({ mapkey, group, onUpdate, onRemove }: AliasMapGroupC
     }
   };
 
+  const nameInvalid = !group.name.trim();
+
   return (
     <div className="space-y-3 rounded-lg border p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1 space-y-1">
           <Label className="text-[10px] text-muted-foreground">组名</Label>
           <Input
-            className="h-8 text-xs"
+            className={cn("h-8 text-xs", nameInvalid && invalidFieldClass)}
             value={group.name}
             placeholder="埋点名"
+            aria-invalid={nameInvalid || undefined}
             onChange={(e) => onUpdate({ name: e.target.value })}
           />
+          {nameInvalid && (
+            <p className="text-[10px] text-destructive">组名不能为空；修正后再保存</p>
+          )}
           <p className="text-[10px] text-muted-foreground">
             ID <code className="font-mono text-foreground">{mapkey}</code>
             {" · "}
@@ -213,8 +223,7 @@ interface AliasSectionProps {
 }
 
 export function AliasSection({ config, mapkey, onChange, onRemove }: AliasSectionProps) {
-  const group = mapkey ? config.aliasMaps[mapkey] : null;
-
+  const group = mapkey ? config.aliasMaps[mapkey] : undefined;
   if (!mapkey || !group) {
     return (
       <p className="text-sm text-muted-foreground">在左侧选择别名组，或新建一个。</p>
@@ -236,7 +245,10 @@ export function AliasSection({ config, mapkey, onChange, onRemove }: AliasSectio
         onUpdate={(patch) =>
           onChange({
             ...config,
-            aliasMaps: { ...config.aliasMaps, [mapkey]: { ...group, ...patch } },
+            aliasMaps: {
+              ...config.aliasMaps,
+              [mapkey]: { name: group.name, mappings: group.mappings, ...patch },
+            },
           })
         }
         onRemove={() => onRemove(mapkey)}

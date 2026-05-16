@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "exportedAt": 1778971053481,
+  "extensionVersion": "0.1.0",
+  "ruleGroups": [
+    {
+      "capture": [
+        "data\\.a1\\.art"
+      ],
+      "enabled": true,
+      "id": "acme-analytics-2026",
+      "name": "A1.art 埋点捕获",
+      "rules": [
+        {
+          "aggregate": true,
+          "aggregateFrom": "json:",
+          "fields": {
+            "desc": "[aggregate:item]distinct_id",
+            "expand": "[aggregate:item]properties",
+            "title": "[aggregate:item]action"
+          },
+          "id": "rule-a1",
+          "renderer": "card",
+          "splits": {
+            "item": "[source:json]"
+          },
+          "url": "data\\.a1\\.art"
+        }
+      ],
+      "sites": [
+        "a1.art/.*"
+      ],
+      "version": 1
+    },
+    {
+      "capture": [
+        "mcs.zijieapi.com/list"
+      ],
+      "enabled": true,
+      "id": "group-1778944597173",
+      "name": "DOUYIN",
+      "rules": [
+        {
+          "aggregate": true,
+          "aggregateFrom": "json:0.events",
+          "fields": {
+            "title": "event"
+          },
+          "id": "rule-1778944597173",
+          "renderer": "card",
+          "url": "mcs.zijieapi.com/list"
+        }
+      ],
+      "sites": [
+        "douyin.com/.*"
+      ],
+      "version": 1
+    }
+  ],
+  "config": {
+    "customProcessors": {
+      "time": "(value) => {\n  const n = Number(value);\n  const ms =\n    typeof value === \"number\"\n      ? n < 1e12\n        ? n * 1000\n        : n\n      : Date.parse(String(value));\n  const d = new Date(ms);\n  if (Number.isNaN(d.getTime())) return String(value ?? \"\");\n  const p = (x) => String(x).padStart(2, \"0\");\n  return p(d.getHours()) + \":\" + p(d.getMinutes()) + \":\" + p(d.getSeconds());\n}",
+      "datetime": "(value) => {\n  const n = Number(value);\n  const ms =\n    typeof value === \"number\"\n      ? n < 1e12\n        ? n * 1000\n        : n\n      : Date.parse(String(value));\n  const d = new Date(ms);\n  return Number.isNaN(d.getTime()) ? String(value ?? \"\") : d.toLocaleString();\n}",
+      "date": "(value) => {\n  const n = Number(value);\n  const ms =\n    typeof value === \"number\"\n      ? n < 1e12\n        ? n * 1000\n        : n\n      : Date.parse(String(value));\n  const d = new Date(ms);\n  if (Number.isNaN(d.getTime())) return String(value ?? \"\");\n  const p = (x) => String(x).padStart(2, \"0\");\n  return d.getFullYear() + \"-\" + p(d.getMonth() + 1) + \"-\" + p(d.getDate());\n}"
+    },
+    "aliasMaps": {
+      "alias-mp8wdf0c": {
+        "name": "A1 埋点名字映射",
+        "mappings": {}
+      }
+    }
+  },
+  "activeRuleGroupId": "acme-analytics-2026"
+}

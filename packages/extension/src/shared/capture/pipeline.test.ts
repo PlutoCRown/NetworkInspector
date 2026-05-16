@@ -19,10 +19,10 @@ const TEST_GROUP: RuleGroup = {
       renderer: "card",
       fields: {
         title: "[source:json]event",
-        popover: "[source:json]properties",
+        expand: "[source:json]properties",
       },
       alias: [{ field: "title", match: "page_view", replace: "页面浏览" }],
-      filters: [{ field: "popover", path: "debug", equals: true, action: "drop" }],
+      filters: [{ field: "expand", path: "debug", equals: true, action: "drop" }],
     },
     {
       id: "beacon-api",
@@ -46,7 +46,7 @@ function single(
 }
 
 describe("processCapture", () => {
-  test("drops event when popover.debug is true", () => {
+  test("drops event when expand.debug is true", () => {
     const result = processCapture(
       TEST_GROUP,
       {
@@ -82,6 +82,37 @@ describe("processCapture", () => {
     expect(result?.data.title).toBe("页面浏览");
   });
 
+  test("treats non-array split source as single capture", () => {
+    const group: RuleGroup = {
+      ...TEST_GROUP,
+      capture: ["/v1/single"],
+      rules: [
+        {
+          id: "single",
+          url: "/v1/single",
+          renderer: "card",
+          splits: { item: "[source:json]event" },
+          fields: { title: "[aggregate:item]action" },
+        },
+      ],
+    };
+    const result = single(
+      processCapture(
+        group,
+        {
+          url: "https://app.acme.io/v1/single",
+          method: "POST",
+          tabUrl: "https://app.acme.io/",
+          responseBody: JSON.stringify({
+            event: { action: "click", module: "home" },
+          }),
+        },
+        CFG,
+      ),
+    );
+    expect(result?.data.title).toBe("click");
+  });
+
   test("aggregate item path and request-level json field", () => {
     const group: RuleGroup = {
       ...TEST_GROUP,
@@ -94,7 +125,7 @@ describe("processCapture", () => {
           splits: { item: "[source:json]items" },
           fields: {
             title: "[aggregate:item]name",
-            popover: "[source:json]meta.source",
+            desc: "[source:json]meta.source",
           },
         },
       ],
@@ -115,7 +146,7 @@ describe("processCapture", () => {
     const list = results as CaptureRecord[];
     expect(list).toHaveLength(2);
     expect(list[0]?.data.title).toBe("a");
-    expect(list[0]?.data.popover).toBe("web");
+    expect(list[0]?.data.desc).toBe("web");
   });
 
   test("processor time formats unix timestamp", () => {

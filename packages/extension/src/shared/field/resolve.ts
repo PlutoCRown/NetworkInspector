@@ -47,6 +47,13 @@ function readRawValue(
   return null;
 }
 
+/** 拆分源为数组时逐项展开；否则将整段值当作单条消息 */
+export function coerceSplitItems(value: unknown): unknown[] | null {
+  if (value == null) return null;
+  if (Array.isArray(value)) return value.length > 0 ? value : null;
+  return [value];
+}
+
 export function resolveSplitArray(
   splitExpr: string,
   input: ExtractInput,
@@ -57,5 +64,5 @@ export function resolveSplitArray(
     input,
     null,
   );
-  return Array.isArray(value) ? value : null;
+  return coerceSplitItems(value);
 }

@@ -9,8 +9,8 @@ export interface RendererDefinition {
 export const RENDERER_DEFINITIONS: RendererDefinition[] = [
   {
     id: "card",
-    label: "卡片（标题 / 描述 / 展开 / 悬停）",
-    fields: ["title", "desc", "expand", "popover"],
+    label: "卡片（标题 / 描述 / 展开）",
+    fields: ["title", "desc", "expand"],
   },
   {
     id: "divider",

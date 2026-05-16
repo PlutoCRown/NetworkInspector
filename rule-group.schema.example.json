@@ -17,7 +17,7 @@
       "renderer": "card",
       "fields": {
         "title": "[source:json]event",
-        "popover": "[source:json]properties"
+        "expand": "[source:json]properties"
       },
       "alias": [
         {
@@ -45,7 +45,7 @@
       ],
       "filters": [
         {
-          "field": "popover",
+          "field": "expand",
           "path": "debug",
           "equals": true,
           "action": "drop"

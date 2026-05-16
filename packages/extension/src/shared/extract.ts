@@ -1,12 +1,12 @@
+import { parseFieldRef as parseRef } from "./field-ref";
 import type { FieldSource } from "./types";
 import { getByPath } from "./path";
 
-export function parseFieldRef(ref: string): { source: FieldSource; path: string } | null {
-  const idx = ref.indexOf(":");
-  if (idx === -1) return null;
-  const source = ref.slice(0, idx) as FieldSource;
-  const path = ref.slice(idx + 1);
-  if (!["query", "json", "form-data", "header"].includes(source)) return null;
+export { parseFieldRef } from "./field-ref";
+
+function parseFieldRef(ref: string): { source: FieldSource; path: string } | null {
+  const { source, path } = parseRef(ref);
+  if (!source) return null;
   return { source, path };
 }
 

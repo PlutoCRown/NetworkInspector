@@ -1,53 +1,59 @@
-import { extractFields } from "./extract";
-import { longestMatchingPattern, matchesAny } from "./regex";
+import { extractField, extractFields } from "./extract";
+import { getByPath } from "./path";
+import { matchesAny } from "./regex";
+import { normalizeRuleGroup } from "./normalize-rule-group";
 import { applyAlias, applyFilters, resolveHighlight } from "./post-process";
 import type { CaptureRecord, RawRequestPayload, Rule, RuleGroup } from "./types";
 
-function findRule(group: RuleGroup, requestUrl: string): Rule | null {
-  const matchedPatterns = group.rules
-    .map((r) => r.url)
-    .filter((pattern) => {
-      try {
-        return new RegExp(pattern).test(requestUrl);
-      } catch {
-        return false;
-      }
-    });
+function findRuleIndex(group: RuleGroup, requestUrl: string): number {
+  const patterns = group.capture;
+  const matched: number[] = [];
+  for (let i = 0; i < patterns.length; i++) {
+    try {
+      if (new RegExp(patterns[i]!).test(requestUrl)) matched.push(i);
+    } catch {
+      /* invalid regex */
+    }
+  }
+  if (matched.length === 0) return -1;
+  if (matched.length === 1) return matched[0]!;
 
-  const best = longestMatchingPattern(
-    requestUrl,
-    matchedPatterns.length ? matchedPatterns : [],
-  );
-  if (!best) return null;
-  return group.rules.find((r) => r.url === best) ?? null;
+  let bestIdx = matched[0]!;
+  let bestLen = -1;
+  for (const i of matched) {
+    const pattern = patterns[i]!;
+    const m = requestUrl.match(new RegExp(pattern));
+    if (m && m[0].length > bestLen) {
+      bestLen = m[0].length;
+      bestIdx = i;
+    }
+  }
+  return bestIdx;
 }
 
-export function processCapture(
+function extractFieldsFromObject(
+  obj: unknown,
+  fields: Record<string, string>,
+): Record<string, unknown> {
+  const data: Record<string, unknown> = {};
+  for (const [key, path] of Object.entries(fields)) {
+    data[key] = path ? getByPath(obj, path) : obj;
+  }
+  return data;
+}
+
+function buildRecord(
   group: RuleGroup,
+  rule: Rule,
   payload: RawRequestPayload,
+  data: Record<string, unknown>,
+  rawData: Record<string, unknown>,
 ): CaptureRecord | null {
-  if (!group.enabled) return null;
-  if (!matchesAny(payload.tabUrl, group.sites)) return null;
-  if (!matchesAny(payload.url, group.capture)) return null;
-
-  const rule = findRule(group, payload.url);
-  if (!rule) return null;
-
-  const rawData = extractFields(
-    {
-      url: payload.url,
-      requestHeaders: payload.requestHeaders,
-      requestBody: payload.requestBody,
-      responseBody: payload.responseBody,
-    },
-    rule.fields,
-  );
-
-  let data = applyAlias(rawData, rule.alias);
-  const highlight = resolveHighlight(data, rule.highlights);
-  const filtered = applyFilters(data, rule.filters);
+  let processed = applyAlias(data, rule.alias);
+  const highlight = resolveHighlight(processed, rule.highlights);
+  const filtered = applyFilters(processed, rule.filters);
   if (!filtered.ok) return null;
-  data = filtered.data;
+  processed = filtered.data;
 
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
@@ -56,10 +62,57 @@ export function processCapture(
     requestUrl: payload.url,
     timestamp: Date.now(),
     renderer: rule.renderer,
-    data,
+    data: processed,
     rawData,
     highlight,
   };
+}
+
+function processRuleCapture(
+  group: RuleGroup,
+  rule: Rule,
+  payload: RawRequestPayload,
+): CaptureRecord | CaptureRecord[] | null {
+  const input = {
+    url: payload.url,
+    requestHeaders: payload.requestHeaders,
+    requestBody: payload.requestBody,
+    responseBody: payload.responseBody,
+  };
+
+  if (rule.aggregate && rule.aggregateFrom) {
+    const arr = extractField(input, rule.aggregateFrom);
+    if (!Array.isArray(arr)) return null;
+
+    const records: CaptureRecord[] = [];
+    for (const item of arr) {
+      const rawData = extractFieldsFromObject(item, rule.fields);
+      const record = buildRecord(group, rule, payload, rawData, rawData);
+      if (record) records.push(record);
+    }
+    return records.length ? records : null;
+  }
+
+  const rawData = extractFields(input, rule.fields);
+  const single = buildRecord(group, rule, payload, rawData, rawData);
+  return single;
+}
+
+export function processCapture(
+  group: RuleGroup,
+  payload: RawRequestPayload,
+): CaptureRecord | CaptureRecord[] | null {
+  const normalized = normalizeRuleGroup(group);
+  if (!normalized.enabled) return null;
+  if (!matchesAny(payload.tabUrl, normalized.sites)) return null;
+  if (!matchesAny(payload.url, normalized.capture)) return null;
+
+  const idx = findRuleIndex(normalized, payload.url);
+  if (idx < 0) return null;
+  const rule = normalized.rules[idx];
+  if (!rule) return null;
+
+  return processRuleCapture(normalized, rule, payload);
 }
 
 export function validateRuleGroup(input: unknown): input is RuleGroup {

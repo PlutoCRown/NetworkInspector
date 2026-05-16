@@ -8,14 +8,14 @@ import {
   saveCaptureEnabled,
   saveRuleGroups,
 } from "../shared/storage";
-import type { AppState, RuleGroup } from "../shared/types";
+import { safeRuntimeSendMessage } from "../shared/extension-context";
+import type { AppState } from "../shared/types";
 
 // 点击图标展开 popup，不直接打开侧边栏
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
 
-async function broadcastState(state: AppState): Promise<void> {
-  const msg: Message = { type: "STATE_UPDATED", state };
-  chrome.runtime.sendMessage(msg).catch(() => {});
+function broadcastState(state: AppState): void {
+  safeRuntimeSendMessage({ type: "STATE_UPDATED", state } satisfies Message);
 }
 
 async function getState(): Promise<AppState> {
@@ -32,15 +32,17 @@ async function handleRawRequest(
 
   let captures = state.captures;
   for (const group of enabledGroups) {
-    const capture = processCapture(group, payload);
-    if (!capture) continue;
-    captures = await appendCapture(capture);
-    const msg: Message = {
-      type: "CAPTURE_ADDED",
-      capture,
-      captures,
-    };
-    chrome.runtime.sendMessage(msg).catch(() => {});
+    const result = processCapture(group, payload);
+    if (!result) continue;
+    const list = Array.isArray(result) ? result : [result];
+    for (const capture of list) {
+      captures = await appendCapture(capture);
+      safeRuntimeSendMessage({
+        type: "CAPTURE_ADDED",
+        capture,
+        captures,
+      } satisfies Message);
+    }
   }
 }
 

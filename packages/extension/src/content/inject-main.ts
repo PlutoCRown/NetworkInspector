@@ -2,8 +2,22 @@ import type { Message } from "../shared/messages";
 import type { RawRequestPayload } from "../shared/types";
 
 const NI_FLAG = "__NI_PATCHED__";
+const NI_RELAY_DEAD = "network-inspector-relay-dead";
+
+let relayAlive = true;
+
+window.addEventListener("message", (event) => {
+  if (event.source !== window) return;
+  if (
+    event.data?.source === "network-inspector-relay" &&
+    event.data?.type === NI_RELAY_DEAD
+  ) {
+    relayAlive = false;
+  }
+});
 
 function sendPayload(payload: RawRequestPayload): void {
+  if (!relayAlive) return;
   const msg: Message = {
     type: "RAW_REQUEST",
     payload: {

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FileUp, PanelRight, Pencil, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -7,16 +7,29 @@ import { Badge } from "@/components/ui/badge";
 import { useAppState, sendMessage } from "@/hooks/useAppState";
 import { openEditorTab, openSidePanel } from "@/lib/chrome-api";
 import { validateRuleGroup } from "@/shared/pipeline";
+import { matchesAny } from "@/shared/regex";
 import type { RuleGroup } from "@/shared/types";
 import { cn } from "@/lib/utils";
 
 export function PopupApp() {
   const { state, refresh } = useAppState();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [tabUrl, setTabUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      setTabUrl(tabs[0]?.url ?? null);
+    });
+  }, []);
 
   const groups = state?.ruleGroups ?? [];
   const globalOn = state?.captureEnabled ?? true;
   const enabledCount = groups.filter((g) => g.enabled).length;
+
+  const siteMatches = (group: RuleGroup) => {
+    if (!tabUrl) return true;
+    return matchesAny(tabUrl, group.sites);
+  };
 
   const handleImportFile = async (file: File) => {
     const text = await file.text();
@@ -35,7 +48,7 @@ export function PopupApp() {
   };
 
   const handleRefresh = () => {
-    void sendMessage({ type: "RELOAD_STATE" }).then((s) => {
+    void sendMessage({ type: "RELOAD_STATE" }).then(() => {
       void refresh();
     });
   };
@@ -100,49 +113,65 @@ export function PopupApp() {
           </p>
         ) : (
           <ul className="max-h-[220px] space-y-1.5 overflow-y-auto">
-            {groups.map((group) => (
-              <li
-                key={group.id}
-                className={cn(
-                  "flex items-center gap-2 rounded-lg border p-2",
-                  group.enabled && globalOn
-                    ? "border-green-200 bg-green-50/80"
-                    : "border-border bg-muted/20",
-                )}
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{group.name}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {group.enabled ? (
-                      <Badge variant="success" className="mr-1 px-1 py-0 text-[9px]">
-                        开
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="mr-1 px-1 py-0 text-[9px]">
-                        关
-                      </Badge>
-                    )}
-                    {group.rules.length} 条规则
-                  </p>
-                </div>
-                <Switch
-                  checked={group.enabled}
-                  disabled={!globalOn}
-                  onCheckedChange={() =>
-                    sendMessage({ type: "TOGGLE_RULE_GROUP", id: group.id })
-                  }
-                />
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="h-8 w-8 shrink-0"
-                  onClick={() => openEditorTab(group.id)}
-                  title="编辑规则组"
+            {groups.map((group) => {
+              const siteOk = siteMatches(group);
+              const activeCapture = group.enabled && globalOn;
+              return (
+                <li
+                  key={group.id}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg border p-2",
+                    activeCapture && siteOk && "border-green-200 bg-green-50/80",
+                    activeCapture && !siteOk && "border-border bg-muted/30 opacity-60",
+                    !activeCapture && "border-border bg-muted/20",
+                  )}
                 >
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-              </li>
-            ))}
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={cn(
+                        "truncate text-sm font-medium",
+                        activeCapture && !siteOk && "text-muted-foreground",
+                      )}
+                    >
+                      {group.name}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {group.enabled ? (
+                        <Badge variant="success" className="mr-1 px-1 py-0 text-[9px]">
+                          开
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="mr-1 px-1 py-0 text-[9px]">
+                          关
+                        </Badge>
+                      )}
+                      {!siteOk && group.enabled && (
+                        <Badge variant="outline" className="mr-1 px-1 py-0 text-[9px]">
+                          站点未匹配
+                        </Badge>
+                      )}
+                      {group.rules.length} 条规则
+                    </p>
+                  </div>
+                  <Switch
+                    checked={group.enabled}
+                    disabled={!globalOn}
+                    onCheckedChange={() =>
+                      sendMessage({ type: "TOGGLE_RULE_GROUP", id: group.id })
+                    }
+                  />
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => openEditorTab(group.id)}
+                    title="编辑规则组"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

@@ -1,4 +1,5 @@
-import { DEFAULT_RULE_GROUP } from "./default-rule-group";
+import { DEFAULT_RULE_GROUPS } from "./default-rule-group";
+import { normalizeRuleGroup } from "./normalize-rule-group";
 import type { AppState, CaptureRecord, RuleGroup } from "./types";
 import { STORAGE_KEYS, MAX_CAPTURES } from "./types";
 
@@ -12,7 +13,7 @@ export async function loadState(): Promise<AppState> {
 
   let ruleGroups = (result[STORAGE_KEYS.ruleGroups] as RuleGroup[] | undefined) ?? [];
   if (ruleGroups.length === 0) {
-    ruleGroups = [DEFAULT_RULE_GROUP];
+    ruleGroups = DEFAULT_RULE_GROUPS;
   }
 
   const activeRuleGroupId =
@@ -25,7 +26,12 @@ export async function loadState(): Promise<AppState> {
   const captureEnabled =
     (result[STORAGE_KEYS.captureEnabled] as boolean | undefined) ?? true;
 
-  return { ruleGroups, activeRuleGroupId, captureEnabled, captures };
+  return {
+    ruleGroups: ruleGroups.map((g) => normalizeRuleGroup(g)),
+    activeRuleGroupId,
+    captureEnabled,
+    captures,
+  };
 }
 
 export async function saveCaptureEnabled(enabled: boolean): Promise<void> {

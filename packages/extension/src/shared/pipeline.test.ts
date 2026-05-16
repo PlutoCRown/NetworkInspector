@@ -1,10 +1,47 @@
 import { describe, expect, test } from "bun:test";
 import { processCapture } from "./pipeline";
-import { DEFAULT_RULE_GROUP } from "./default-rule-group";
+import type { RuleGroup } from "./types";
+
+const TEST_GROUP: RuleGroup = {
+  version: 1,
+  id: "test",
+  name: "test",
+  enabled: true,
+  sites: ["^https://app\\.acme\\.io/"],
+  capture: ["/v1/events", "/v1/beacon"],
+  rules: [
+    {
+      id: "events-api",
+      url: "/v1/events",
+      renderer: "title-popover",
+      fields: { title: "json:event", popover: "json:properties" },
+      alias: [{ field: "title", match: "page_view", replace: "页面浏览" }],
+      filters: [{ field: "popover", path: "debug", equals: true, action: "drop" }],
+    },
+    {
+      id: "beacon-api",
+      url: "/v1/beacon",
+      renderer: "title-popover",
+      fields: {
+        title: "query:action",
+        desc: "query:module",
+        expend: "json:",
+      },
+      filters: [{ field: "expend", path: "_internal", action: "strip" }],
+    },
+  ],
+};
+
+function single(
+  result: ReturnType<typeof processCapture>,
+): Extract<ReturnType<typeof processCapture>, { data: unknown }> | null {
+  if (!result) return null;
+  return Array.isArray(result) ? result[0] ?? null : result;
+}
 
 describe("processCapture", () => {
   test("drops event when popover.debug is true", () => {
-    const result = processCapture(DEFAULT_RULE_GROUP, {
+    const result = processCapture(TEST_GROUP, {
       url: "https://app.acme.io/v1/events",
       method: "POST",
       tabUrl: "https://app.acme.io/",
@@ -17,7 +54,8 @@ describe("processCapture", () => {
   });
 
   test("aliases page_view title", () => {
-    const result = processCapture(DEFAULT_RULE_GROUP, {
+    const result = single(
+      processCapture(TEST_GROUP, {
       url: "https://app.acme.io/v1/events",
       method: "POST",
       tabUrl: "https://app.acme.io/",
@@ -25,17 +63,20 @@ describe("processCapture", () => {
         event: "page_view",
         properties: { ok: 1 },
       }),
-    });
+    }),
+    );
     expect(result?.data.title).toBe("页面浏览");
   });
 
   test("strips _internal from beacon expend", () => {
-    const result = processCapture(DEFAULT_RULE_GROUP, {
+    const result = single(
+      processCapture(TEST_GROUP, {
       url: "https://app.acme.io/v1/beacon?action=click&module=home",
       method: "POST",
       tabUrl: "https://app.acme.io/",
       responseBody: JSON.stringify({ _internal: true, data: { ok: 1 } }),
-    });
+    }),
+    );
     expect(result?.data.expend).toEqual({ data: { ok: 1 } });
   });
 });

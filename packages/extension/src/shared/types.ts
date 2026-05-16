@@ -1,6 +1,6 @@
 export type FieldSource = "query" | "json" | "form-data" | "header";
 
-export type RendererId = "title-popover" | "title-desc-expand" | "custom";
+export type RendererId = "title-popover" | "custom";
 
 export interface AliasRule {
   field: string;
@@ -23,8 +23,13 @@ export interface FilterRule {
 
 export interface Rule {
   id: string;
+  /** 与 capture[] 同索引对应；保存时与 capture[i] 同步 */
   url: string;
   renderer: RendererId | string;
+  /** 聚合请求：从 aggregateFrom 指向的数组逐条展开捕获 */
+  aggregate?: boolean;
+  /** 必须解析为 JSON 数组，如 json:events */
+  aggregateFrom?: string;
   fields: Record<string, string>;
   alias?: AliasRule[];
   highlights?: HighlightRule[];

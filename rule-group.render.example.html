@@ -30,14 +30,15 @@
     word-break: break-all;
   }
 </style>
-
+<!-- x-card 标记为卡片根节点，x-title 标记为标题节点， highlight 标记为高亮标题节点,如果命中highlight规则，会替换掉相同x-name的，x-expand 标记为展开节点，x-popover 标记为弹出节点,x-if会只在用户填写了这个字段的时候才展示 -->
 <article class="ni-card" x-card>
-  <div class="ni-card__title" x-title>{{title}}</div>
-  <div class="ni-card__title" x-title highlight>{{title}}</div>
+  <div class="ni-card__title" x-name="title">{{title}}</div>
+  <div class="ni-card__title highlight" x-name="title" highlight>{{title}}</div>
 
-  <div class="ni-card__desc" x-desc>{{desc}}</div>
+  <div class="ni-card__desc" x-if="desc">
+    <span>{{desc}}</span>
+  </div>
 
-  <div class="ni-card__expand" x-expand>{{expend}}</div>
-
-  <div x-popover>{{popover}}</div>
 </article>
+<div class="ni-card__expand" x-expand>{{expend}}</div>
+<div x-popover>{{popover}}</div>

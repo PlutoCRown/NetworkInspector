@@ -1,0 +1,10 @@
+{
+  "name": "network-inspector",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev": "bun run --filter @network-inspector/extension dev",
+    "build": "bun run --filter @network-inspector/extension build",
+    "test": "bun run --filter @network-inspector/extension test"
+  }
+}

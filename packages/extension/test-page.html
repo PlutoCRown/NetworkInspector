@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>NetworkInspector 测试页</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 640px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      button {
+        margin: 0.25rem;
+        padding: 0.5rem 1rem;
+      }
+      pre {
+        background: #f4f4f5;
+        padding: 1rem;
+        border-radius: 8px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>NetworkInspector 测试页</h1>
+    <p>请先加载扩展并启用规则组，再点击下方按钮发送测试请求。</p>
+    <div>
+      <button id="btn-event">POST /v1/events（应被 drop）</button>
+      <button id="btn-event-ok">POST /v1/events（正常）</button>
+      <button id="btn-beacon">GET /v1/beacon</button>
+    </div>
+    <pre id="log"></pre>
+    <script>
+      const log = (msg) => {
+        document.getElementById("log").textContent += msg + "\n";
+      };
+
+      document.getElementById("btn-event").onclick = () => {
+        fetch("/v1/events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event: "page_view",
+            properties: { debug: true, x: 1 },
+          }),
+        }).then(() => log("sent event with debug"));
+      };
+
+      document.getElementById("btn-event-ok").onclick = () => {
+        fetch("/v1/events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event: "purchase",
+            properties: { amount: 99 },
+          }),
+        }).then(() => log("sent event purchase"));
+      };
+
+      document.getElementById("btn-beacon").onclick = () => {
+        fetch("/v1/beacon?action=click&module=home", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ _internal: true, data: { ok: 1 } }),
+        }).then(() => log("sent beacon"));
+      };
+    </script>
+  </body>
+</html>

@@ -14,34 +14,59 @@
     {
       "id": "events-api",
       "url": "/v1/events",
-      "renderer": "title-popover",
+      "renderer": "card",
       "fields": {
         "title": "json:event",
         "popover": "json:properties"
       },
       "alias": [
-        { "field": "title", "match": "page_view", "replace": "页面浏览" },
-        { "field": "title", "match": "button_click", "replace": "按钮点击" }
+        {
+          "field": "title",
+          "match": "page_view",
+          "replace": "页面浏览"
+        },
+        {
+          "field": "title",
+          "match": "button_click",
+          "replace": "按钮点击"
+        }
       ],
       "highlights": [
-        { "field": "title", "match": "error", "tone": "danger" },
-        { "field": "title", "match": "purchase", "tone": "success" }
+        {
+          "field": "title",
+          "match": "error",
+          "tone": "danger"
+        },
+        {
+          "field": "title",
+          "match": "purchase",
+          "tone": "success"
+        }
       ],
       "filters": [
-        { "field": "popover", "path": "debug", "equals": true, "action": "drop" }
+        {
+          "field": "popover",
+          "path": "debug",
+          "equals": true,
+          "action": "drop"
+        }
       ]
     },
     {
       "id": "beacon-api",
       "url": "/v1/beacon",
-      "renderer": "title-desc-expand",
+      "renderer": "card",
       "fields": {
         "title": "query:action",
         "desc": "query:module",
         "expend": "json:"
       },
       "filters": [
-        { "field": "expend", "path": "_internal", "action": "strip" }
+        {
+          "field": "expend",
+          "path": "_internal",
+          "action": "strip"
+        }
       ]
     }
   ]

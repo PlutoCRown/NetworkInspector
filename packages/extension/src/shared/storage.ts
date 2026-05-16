@@ -1,6 +1,12 @@
 import { DEFAULT_RULE_GROUPS } from "@network-inspector/presets";
 import { normalizeRuleGroup } from "./normalize-rule-group";
-import type { AppState, CaptureRecord, RuleGroup } from "./types";
+import {
+  DEFAULT_APP_CONFIG,
+  type AppConfig,
+  type AppState,
+  type CaptureRecord,
+  type RuleGroup,
+} from "./types";
 import { STORAGE_KEYS, MAX_CAPTURES } from "./types";
 
 export async function loadState(): Promise<AppState> {
@@ -9,6 +15,7 @@ export async function loadState(): Promise<AppState> {
     STORAGE_KEYS.activeRuleGroupId,
     STORAGE_KEYS.captureEnabled,
     STORAGE_KEYS.captures,
+    STORAGE_KEYS.config,
   ]);
 
   let ruleGroups = (result[STORAGE_KEYS.ruleGroups] as RuleGroup[] | undefined) ?? [];
@@ -26,12 +33,22 @@ export async function loadState(): Promise<AppState> {
   const captureEnabled =
     (result[STORAGE_KEYS.captureEnabled] as boolean | undefined) ?? true;
 
+  const config = {
+    ...DEFAULT_APP_CONFIG,
+    ...((result[STORAGE_KEYS.config] as AppConfig | undefined) ?? {}),
+  };
+
   return {
     ruleGroups: ruleGroups.map((g) => normalizeRuleGroup(g)),
     activeRuleGroupId,
     captureEnabled,
     captures,
+    config,
   };
+}
+
+export async function saveAppConfig(config: AppConfig): Promise<void> {
+  await chrome.storage.local.set({ [STORAGE_KEYS.config]: config });
 }
 
 export async function saveCaptureEnabled(enabled: boolean): Promise<void> {

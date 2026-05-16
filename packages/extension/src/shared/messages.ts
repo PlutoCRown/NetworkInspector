@@ -1,4 +1,4 @@
-import type { CaptureRecord, RawRequestPayload, RuleGroup } from "./types";
+import type { AppConfig, CaptureRecord, RawRequestPayload, RuleGroup } from "./types";
 
 export type Message =
   | { type: "RAW_REQUEST"; payload: RawRequestPayload }
@@ -13,4 +13,5 @@ export type Message =
   | { type: "SAVE_RULE_GROUP"; group: RuleGroup }
   | { type: "DELETE_RULE_GROUP"; id: string }
   | { type: "CLEAR_CAPTURES" }
+  | { type: "SAVE_APP_CONFIG"; config: AppConfig }
   | { type: "OPEN_EDITOR"; ruleGroupId?: string };

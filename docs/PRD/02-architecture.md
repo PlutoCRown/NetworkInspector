@@ -12,7 +12,7 @@
 |----|------|
 | UI 组件库 | [shadcn/ui](https://ui.shadcn.com/) |
 | 扩展脚手架 | 选用成熟 Chrome Extension 模板（Manifest V3），与 React/Vite 等栈对齐 shadcn |
-| 样式 | 与 shadcn 主题一致；模板内 `<style>` 仅作用于单卡片段（见 [07-template-syntax.md](./07-template-syntax.md)） |
+| 样式 | 与 shadcn 主题一致；跟随系统深浅色（`prefers-color-scheme`） |
 
 ## 2.3 扩展能力分区
 
@@ -56,7 +56,7 @@ Background: capture URL 匹配? ──否──► 忽略
 应用 alias / highlights / filter（08）
       │
       ▼
-Side Panel: 按 renderer 或 template 渲染卡片
+Side Panel: 按 renderer 分发 React 组件渲染卡片
 ```
 
 ## 2.5 子 agent 边界

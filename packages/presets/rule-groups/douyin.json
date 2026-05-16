@@ -3,19 +3,23 @@
   "id": "group-1778944597173",
   "name": "DOUYIN",
   "enabled": true,
-  "sites": ["douyin.com/.*"],
-  "capture": ["mcs.zijieapi.com/list"],
+  "sites": [
+    "douyin.com/.*"
+  ],
+  "capture": [
+    "mcs.zijieapi.com/list"
+  ],
   "rules": [
     {
       "id": "rule-1778944597173",
       "url": "mcs.zijieapi.com/list",
       "renderer": "card",
       "aggregate": true,
+      "aggregateFrom": "json:0.events|aggregate",
       "fields": {
-        "title": "aggregate:event",
-        "popover": "aggregate:params"
-      },
-      "aggregateFrom": "json:0.events"
+        "title": "item:event",
+        "popover": "item:params"
+      }
     }
   ]
 }

@@ -5,8 +5,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAppState, sendMessage } from "@/hooks/useAppState";
 import { createEmptyRule } from "@/shared/create-empty-rule";
 import { normalizeRuleGroup } from "@/shared/normalize-rule-group";
-import type { RuleGroup } from "@/shared/types";
+import type { AppConfig, RuleGroup } from "@/shared/types";
 import { cn } from "@/lib/utils";
+import { GlobalConfigSection } from "./form/GlobalConfigSection";
 import { RuleGroupForm } from "./RuleGroupForm";
 
 function emptyGroup(): RuleGroup {
@@ -27,7 +28,11 @@ export function EditorApp() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [jsonMode, setJsonMode] = useState(false);
   const [jsonText, setJsonText] = useState("");
+  const [view, setView] = useState<"group" | "settings">("group");
+  const [configDraft, setConfigDraft] = useState<AppConfig | null>(null);
   const initialized = useRef(false);
+
+  const config = configDraft ?? state?.config;
 
   const selectGroup = useCallback(
     (id: string | "new") => {
@@ -82,9 +87,19 @@ export function EditorApp() {
     else selectGroup("new");
   }, [state, selectGroup]);
 
-  if (!group || !state) {
+  useEffect(() => {
+    if (state?.config) setConfigDraft(state.config);
+  }, [state?.config]);
+
+  if (!group || !state || !config) {
     return <div className="p-6">加载中…</div>;
   }
+
+  const saveConfig = async () => {
+    await sendMessage({ type: "SAVE_APP_CONFIG", config });
+    await refresh();
+    alert("全局配置已保存");
+  };
 
   const save = async () => {
     const normalized = normalizeRuleGroup(group);
@@ -142,7 +157,10 @@ export function EditorApp() {
               <li key={g.id}>
                 <button
                   type="button"
-                  onClick={() => selectGroup(g.id)}
+                  onClick={() => {
+                    setView("group");
+                    selectGroup(g.id);
+                  }}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors",
                     selectedId === g.id
@@ -163,12 +181,23 @@ export function EditorApp() {
             ))}
           </ul>
         </nav>
-        <div className="border-t p-2">
+        <div className="space-y-1 border-t p-2">
+          <Button
+            variant={view === "settings" ? "secondary" : "ghost"}
+            size="sm"
+            className="w-full justify-start"
+            onClick={() => setView("settings")}
+          >
+            全局配置
+          </Button>
           <Button
             variant="outline"
             size="sm"
             className="w-full justify-start"
-            onClick={() => selectGroup("new")}
+            onClick={() => {
+              setView("group");
+              selectGroup("new");
+            }}
           >
             <Plus className="h-4 w-4" />
             新建规则组
@@ -179,29 +208,48 @@ export function EditorApp() {
       <main className="min-w-0 flex-1 overflow-y-auto p-6">
         <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold">{group.name}</h1>
-            <p className="text-sm text-muted-foreground">编辑站点、捕获与字段提取</p>
+            <h1 className="text-2xl font-semibold">
+              {view === "settings" ? "全局配置" : group.name}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {view === "settings"
+                ? "别名映射与自定义 Processor"
+                : "编辑站点、捕获与字段提取"}
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => setJsonMode((v) => !v)}>
-              {jsonMode ? "表单" : "JSON"}
-            </Button>
-            <Button variant="outline" size="sm" onClick={exportJson}>
-              <Download className="h-4 w-4" />
-              导出
-            </Button>
-            <Button variant="outline" size="sm" onClick={deleteGroup}>
-              <Trash2 className="h-4 w-4" />
-              删除
-            </Button>
-            <Button size="sm" onClick={save}>
-              <Save className="h-4 w-4" />
-              保存
-            </Button>
+            {view === "settings" ? (
+              <Button size="sm" onClick={saveConfig}>
+                <Save className="h-4 w-4" />
+                保存
+              </Button>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setJsonMode((v) => !v)}>
+                  {jsonMode ? "表单" : "JSON"}
+                </Button>
+                <Button variant="outline" size="sm" onClick={exportJson}>
+                  <Download className="h-4 w-4" />
+                  导出
+                </Button>
+                <Button variant="outline" size="sm" onClick={deleteGroup}>
+                  <Trash2 className="h-4 w-4" />
+                  删除
+                </Button>
+                <Button size="sm" onClick={save}>
+                  <Save className="h-4 w-4" />
+                  保存
+                </Button>
+              </>
+            )}
           </div>
         </header>
 
-        {jsonMode ? (
+        {view === "settings" ? (
+          <div className="mx-auto max-w-2xl">
+            <GlobalConfigSection config={config} onChange={setConfigDraft} />
+          </div>
+        ) : jsonMode ? (
           <div className="space-y-3">
             <Textarea
               className="min-h-[420px] font-mono text-xs"
@@ -211,7 +259,7 @@ export function EditorApp() {
             <Button onClick={loadJson}>应用 JSON</Button>
           </div>
         ) : (
-          <RuleGroupForm group={group} onChange={setGroup} />
+          <RuleGroupForm group={group} config={config} onChange={setGroup} />
         )}
       </main>
     </div>

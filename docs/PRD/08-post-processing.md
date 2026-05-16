@@ -44,7 +44,7 @@
 
 - 当 `data[field]` 字符串 **包含** `match` 子串时，标记该条 capture 的 highlight 状态：`{ field, tone }`。
 - 多条命中：取 **第一条** 或 **优先级最高**（实现固定一种；推荐第一条）。
-- **不修改** 字符串内容；仅影响 [06](./06-renderers-and-sidebar.md) / [07](./07-template-syntax.md) 使用 `x-title highlight` 分支及 `data-tone`。
+- **不修改** 字符串内容；仅影响 [06](./06-renderers-and-sidebar.md) 中 `CardCapture` 的标题着色（`data-tone`）。
 - 高亮**视觉样式**由 Renderer/模板 CSS 定义（如 `.ni-card__title[data-tone="danger"]`）。
 
 ## 8.5 Filter

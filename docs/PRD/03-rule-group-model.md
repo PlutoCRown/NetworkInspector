@@ -22,46 +22,48 @@
 |------|------|------|------|
 | `id` | string | 是 | 规则块 ID，导入后保持稳定 |
 | `url` | string | 是 | 与 `capture` 中某条对应的 URL 正则（或子模式） |
-| `renderer` | string | 是 | 预设 ID 或 `custom` |
-| `fields` | Record<string, string> | 是 | 字段名 → `"来源:路径"` |
+| `renderer` | string | 是 | 预设 ID：`card` \| `divider` |
+| `aggregate` | boolean | 否 | 已废弃；由 `aggregateFrom` 是否含 `\|aggregate` 推断 |
+| `aggregateFrom` | string | 否 | 聚合数组来源，如 `json:data\|aggregate` |
+| `fields` | Record<string, string> | 是 | 字段名 → 字段表达式（见 3.2.2） |
 | `alias` | AliasRule[] | 否 | 见 [08](./08-post-processing.md) |
 | `highlights` | HighlightRule[] | 否 | 见 [08](./08-post-processing.md) |
 | `filters` | FilterRule[] | 否 | 见 [08](./08-post-processing.md) |
-| `decode` | string | 否 | 覆盖本 rule 的解码脚本（高级模式） |
-| `template` | string | 否 | 覆盖本 rule 的模板（`renderer: custom` 时） |
-
 ### 3.2.1 `fields` 键名与 Renderer 的对应关系
 
-| `renderer` | `fields` 必须包含的键 |
-|------------|-------------------------|
-| `title-popover` | `title`, `popover` |
-| `title-desc-expand` | `title`, `desc`, `expend` |
-| `custom` | 与模板中 `{{...}}` 占位符一致 |
+定义见 `packages/presets/src/renderers.ts`：
+
+| `renderer` | `fields` 键 |
+|------------|-------------|
+| `card` | `title`, `desc`, `expend`, `popover`（按需填写） |
+| `divider` | `title` |
 
 > 注：产品文案与示例中使用 `expend`（与 expand 同义），实现与文档保持一致，勿擅自改名为 `expand` 除非全库迁移。
 
-### 3.2.2 `fields` 值格式：`来源:路径`
+### 3.2.2 字段表达式（管道符串联）
+
+Tag 顺序：**Source**（必填，且仅一个、在最前）→ 可选 **Aggregate**（仅 `aggregateFrom`）→ 路径 → 可选 **Processor** / **Alias**。
 
 ```
-query:action      → URL query 参数 action
-json:event.name   → JSON body 点路径
-json:             → 整个 JSON body（路径为空）
-form-data:email   → multipart/form 字段
-header:x-trace-id → 请求头
+json:event.name              → JSON body 点路径
+json:data|aggregate          → 聚合数组来源（打散后逐条渲染）
+item:action                  → 聚合模式下当前数组项字段
+item:time|processor:time     → 取值后走内置/自定义 processor
+item:event|alias:埋点名       → 取值后走全局 aliasMaps["埋点名"]
 ```
 
-- **来源**枚举：`query` | `json` | `form-data` | `header`
-- **路径**：该来源下的 key path；`json:` 表示根对象
-- 设置页输入 UX：GitHub 搜索框式 **tag + 路径**（见 [05-extraction.md](./05-extraction.md)）
+- **Source**：`query` | `json` | `form-data` | `header`
+- **Scope**：`item` 表示数组项（旧 `aggregate:path` 导入时迁移为 `item:path`）
+- 全局 **AppConfig**（别名表、自定义 processor）见编辑器「全局配置」
 
 ## 3.3 预设 Renderer ID
 
-| ID | 结构 | 设置页表单项数量 |
-|----|------|------------------|
-| `title-popover` | `title: string`, `popover: object` | 2 |
-| `title-desc-expand` | `title: string`, `desc: string`, `expend: object` | 3 |
+| ID | React 组件 | 说明 |
+|----|------------|------|
+| `card` | `CardCapture` | 标题/描述/悬停 Popover/点击展开 |
+| `divider` | `DividerCapture` | 分割线 + 居中 title |
 
-内置预设的 **布局与交互** 由扩展实现；导出 JSON 时 **不必** 嵌入预设的 HTML，仅写 `renderer` 字段。
+旧 ID `title-popover`、`title-desc-expand` 导入时自动映射为 `card`。
 
 ## 3.4 匹配优先级（预期行为）
 

@@ -5,6 +5,7 @@ import {
   clearCaptures,
   loadState,
   saveActiveRuleGroupId,
+  saveAppConfig,
   saveCaptureEnabled,
   saveRuleGroups,
 } from "../shared/storage";
@@ -12,7 +13,7 @@ import { safeRuntimeSendMessage } from "../shared/extension-context";
 import type { AppState } from "../shared/types";
 
 // 点击图标展开 popup，不直接打开侧边栏
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => { });
 
 function broadcastState(state: AppState): void {
   safeRuntimeSendMessage({ type: "STATE_UPDATED", state } satisfies Message);
@@ -32,7 +33,7 @@ async function handleRawRequest(
 
   let captures = state.captures;
   for (const group of enabledGroups) {
-    const result = processCapture(group, payload);
+    const result = processCapture(group, payload, state.config);
     if (!result) continue;
     const list = Array.isArray(result) ? result : [result];
     for (const capture of list) {
@@ -135,6 +136,12 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
       }
       case "CLEAR_CAPTURES": {
         await clearCaptures();
+        await broadcastState(await getState());
+        sendResponse({ ok: true });
+        break;
+      }
+      case "SAVE_APP_CONFIG": {
+        await saveAppConfig(message.config);
         await broadcastState(await getState());
         sendResponse({ ok: true });
         break;

@@ -7,7 +7,7 @@
 | 用户 | 运营、测试、非开发 | 前端/埋点开发 |
 | 创建方式 | 表单 + 预设 Renderer | + 自定义解码 JS、自定义 HTML 模板 |
 | 解码 | 内置 JSON/query/form/header | 可注入 `decode` 脚本 |
-| 渲染 | 预设卡片 | 预设或 [07](./07-template-syntax.md) 模板 |
+| 渲染 | 预设 React 组件 | 见 [07](./07-template-syntax.md) |
 
 规则组可在**规则组级**或**单 rule 级**开启高级能力（实现时至少支持 rule 级 `decode`）。
 

@@ -31,11 +31,10 @@
 
 顺序 **固定**：
 
-1. **选择 Renderer**（下拉：title-popover / title-desc-expand / custom）
-2. **URL 模式**（对应 `rules[].url`）
-3. **字段行**（数量随 renderer 变化；custom 时字段行与模板占位符同步或允许自由添加）
-4. **后处理**（alias / highlights / filter，见 [08](./08-post-processing.md)）
-5. custom 时：**模板编辑器**（代码框，语法高亮可选 Should）
+1. **选择 Renderer**（下拉：`card` / `divider`，字段列表来自 `RENDERER_DEFINITIONS`）
+2. **聚合请求**（可选开关 + `aggregateFrom`）
+3. **字段行**（数量随 renderer 固定；聚合模式下来源含 `aggregate`）
+4. **后处理**（alias / highlights / filter，见 [08](./08-post-processing.md)，后续 UI）
 
 ### 字段输入
 
@@ -44,8 +43,6 @@
 ## 9.4 Export
 
 - 导出当前规则组为 JSON，结构与 [`rule-group.schema.example.json`](../../rule-group.schema.example.json) 一致。
-- 若使用自定义模板：可选 **同时导出** `.html` 片段，或嵌入 `template` 字符串字段（实现二选一；推荐大模板用独立文件 + Import 时合并）。
-
 ## 9.5 Import
 
 ### 流程

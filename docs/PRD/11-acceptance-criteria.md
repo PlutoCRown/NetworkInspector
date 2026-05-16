@@ -44,8 +44,8 @@
 
 ## E. 预设 Renderer 与侧边栏（06）
 
-- [ ] `title-popover`：标题常显；悬停显示 popover 内容
-- [ ] `title-desc-expand`：标题+描述常显；点击后展开 `expend`
+- [ ] `card`：标题常显；悬停显示 popover；点击展开 expend
+- [ ] `divider`：分割线居中显示 title
 - [ ] 列表新条目在上（或 UI 标明排序规则）
 - [ ] 空状态文案符合 06 第四节
 

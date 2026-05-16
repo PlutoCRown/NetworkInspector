@@ -31,11 +31,28 @@ export interface RawRequestPayload {
   responseBody?: string | null;
 }
 
+/** 全局别名表：mapId → { 原始值: 展示值 } */
+export type AliasMapConfig = Record<string, Record<string, string>>;
+
+/** 自定义 Processor：id → JS 函数体 `(value) => ...` */
+export type CustomProcessorConfig = Record<string, string>;
+
+export interface AppConfig {
+  aliasMaps: AliasMapConfig;
+  customProcessors: CustomProcessorConfig;
+}
+
+export const DEFAULT_APP_CONFIG: AppConfig = {
+  aliasMaps: {},
+  customProcessors: {},
+};
+
 export interface AppState {
   ruleGroups: RuleGroup[];
   activeRuleGroupId: string | null;
   captureEnabled: boolean;
   captures: CaptureRecord[];
+  config: AppConfig;
 }
 
 export const STORAGE_KEYS = {
@@ -43,6 +60,7 @@ export const STORAGE_KEYS = {
   activeRuleGroupId: "ni_active_rule_group_id",
   captureEnabled: "ni_capture_enabled",
   captures: "ni_captures",
+  config: "ni_app_config",
 } as const;
 
 export const MAX_CAPTURES = 200;

@@ -3,19 +3,23 @@
   "id": "acme-analytics-2026",
   "name": "A1.art 埋点捕获",
   "enabled": true,
-  "sites": ["a1.art/.*"],
-  "capture": ["data\\.a1\\.art"],
+  "sites": [
+    "a1.art/.*"
+  ],
+  "capture": [
+    "data\\.a1\\.art"
+  ],
   "rules": [
     {
       "id": "rule-a1",
       "url": "data\\.a1\\.art",
       "renderer": "card",
       "aggregate": true,
+      "aggregateFrom": "json:|aggregate",
       "fields": {
-        "title": "aggregate:action",
-        "popover": "aggregate:properties"
-      },
-      "aggregateFrom": "json:"
+        "title": "item:action",
+        "popover": "item:properties"
+      }
     }
   ]
 }

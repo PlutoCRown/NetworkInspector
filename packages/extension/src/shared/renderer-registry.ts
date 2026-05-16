@@ -27,6 +27,6 @@ export function defaultFieldsForRenderer(
   aggregate: boolean,
 ): Record<string, string> {
   const keys = getRendererFields(rendererId);
-  if (aggregate) return Object.fromEntries(keys.map((k) => [k, "aggregate:"]));
-  return Object.fromEntries(keys.map((k) => [k, "json:"]));
+  if (aggregate) return Object.fromEntries(keys.map((k) => [k, `item:${k}`]));
+  return Object.fromEntries(keys.map((k) => [k, `json:${k}`]));
 }

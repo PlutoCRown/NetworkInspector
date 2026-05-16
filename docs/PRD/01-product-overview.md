@@ -39,7 +39,7 @@
 站点匹配 (sites)
     → 请求捕获 (capture)
         → 结构化提取 (rules[].fields)
-            → 侧边栏渲染 (renderer / template)
+            → 侧边栏渲染 (React renderer)
 ```
 
 任一阶段未命中则该请求**不进入**下一阶段；不得出现「未匹配站点却展示捕获卡片」等情况。

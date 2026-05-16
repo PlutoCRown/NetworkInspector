@@ -11,8 +11,8 @@
 
 1. 根据 [04](./04-site-and-capture.md) 命中 `rules[].url`。
 2. 读取该 rule 的 `fields`。
-3. 若存在 `decode` 脚本（[10](./10-modes-and-advanced.md)），先得到「可解析的 body 对象/字符串」。
-4. 按每个 field 的 `来源:路径` 取值。
+3. 按每个 field 的**字段表达式**解析（`field-expr`：Source / item / processor / alias）。
+4. 若 rule 配置了 `aggregateFrom`（含 `|aggregate`），先解析数组再对每项求 `item:` 字段。
 5. 将结果组装为 **扁平对象**，键为 field 名，值为 `string | object | null`。
 6. 传入后处理管道（[08](./08-post-processing.md)）。
 7. 输出 **CaptureRecord** 供渲染：
@@ -46,22 +46,30 @@ interface CaptureRecord {
 | 值为对象/数组 | 原样保留；模板中对象默认 `JSON.stringify` 美化展示 |
 | `json:` 根为数组 | 允许，`expend` 等字段可为 array |
 
-## 5.4 设置页输入 UX（普通模式）
+## 5.4 设置页输入 UX
 
 ### 必须先选 Renderer
 
-编辑板块顶部选择 `title-popover` / `title-desc-expand` / `custom`，**再**展示对应数量的字段行。
+编辑板块顶部选择 `card` / `divider`，**再**展示对应数量的字段行（见 `RENDERER_DEFINITIONS`）。
 
-### 字段行交互（类 GitHub 搜索框）
+### 字段行（Tag 顺序）
 
-- 用户输入时弹出 tag：`query`、`json`、`form-data`、`header`。
-- 选中 tag 后，继续输入 path/key。
-- 保存时序列化为 `json:event.name` 形式写入 `fields`。
+1. **Source** tag：`json` / `query` / `form-data` / `header`（必选、仅一个、在最前）
+2. 输入路径；聚合源可点 **+ Aggregate**
+3. 聚合模式下字段 scope 为 **item**，路径如 `name`
+4. 可选 **+ Processor**（`time` / `datetime` / `date` 或全局自定义）
+5. 可选 **+ Alias**（引用全局 `aliasMaps` 名称）
+
+序列化示例：`item:time|processor:time|alias:埋点名`；聚合源：`json:0.events|aggregate`。
+
+### 全局配置
+
+编辑器侧栏「全局配置」：`aliasMaps`、`customProcessors`（`(value) => ...` JS）。
 
 ### 校验
 
 - 每个必填 field（由 renderer 决定）非空才能保存。
-- tag 非法时不允许保存。
+- Source 缺失或顺序错误时输入框提示。
 
 ## 5.5 与示例 JSON 的对照
 

@@ -1,11 +1,11 @@
-import { extractField, extractFields } from "./extract";
-import { formatFieldRef, parseFieldRef } from "./field-ref";
-import { getByPath } from "./path";
-import type { ExtractInput } from "./extract";
+import { extractFields } from "./extract";
+import { hasAggregateSource } from "./field-expr";
+import { resolveAggregateArray, resolveFieldExpr } from "./field-resolve";
 import { matchesAny } from "./regex";
 import { normalizeRuleGroup } from "./normalize-rule-group";
 import { applyAlias, applyFilters, resolveHighlight } from "./post-process";
-import type { CaptureRecord, RawRequestPayload, Rule, RuleGroup } from "./types";
+import type { AppConfig, CaptureRecord, RawRequestPayload, Rule, RuleGroup } from "./types";
+import type { ExtractInput } from "./extract";
 
 function findRuleIndex(group: RuleGroup, requestUrl: string): number {
   const patterns = group.capture;
@@ -33,32 +33,15 @@ function findRuleIndex(group: RuleGroup, requestUrl: string): number {
   return bestIdx;
 }
 
-/** 聚合模式下：aggregate / 裸路径从数组项读取，其它来源从完整请求读取 */
-function extractFieldForAggregateItem(
-  item: unknown,
-  input: ExtractInput,
-  ref: string,
-): unknown {
-  if (!ref) return item;
-
-  const { source, path } = parseFieldRef(ref);
-  if (!source) {
-    return getByPath(item, ref);
-  }
-  if (source === "aggregate") {
-    return path ? getByPath(item, path) : item;
-  }
-  return extractField(input, formatFieldRef(source, path));
-}
-
-function extractFieldsFromAggregateItem(
-  item: unknown,
-  input: ExtractInput,
+function extractFieldsWithConfig(
   fields: Record<string, string>,
+  input: ExtractInput,
+  item: unknown | null,
+  config: AppConfig,
 ): Record<string, unknown> {
   const data: Record<string, unknown> = {};
   for (const [key, ref] of Object.entries(fields)) {
-    data[key] = extractFieldForAggregateItem(item, input, ref);
+    data[key] = resolveFieldExpr(ref, input, item, config);
   }
   return data;
 }
@@ -93,41 +76,39 @@ function processRuleCapture(
   group: RuleGroup,
   rule: Rule,
   payload: RawRequestPayload,
+  config: AppConfig,
 ): CaptureRecord | CaptureRecord[] | null {
-  const input = {
+  const input: ExtractInput = {
     url: payload.url,
     requestHeaders: payload.requestHeaders,
     requestBody: payload.requestBody,
     responseBody: payload.responseBody,
   };
 
-  if (rule.aggregate && rule.aggregateFrom) {
-    const arr = extractField(input, rule.aggregateFrom);
-    if (!Array.isArray(arr)) return null;
+  const aggregateFrom = rule.aggregateFrom ?? "";
+  const useAggregate = rule.aggregate ?? hasAggregateSource(aggregateFrom);
+
+  if (useAggregate && aggregateFrom) {
+    const arr = resolveAggregateArray(aggregateFrom, input);
+    if (!arr) return null;
 
     const records: CaptureRecord[] = [];
-    const extractInput = {
-      url: payload.url,
-      requestHeaders: payload.requestHeaders,
-      requestBody: payload.requestBody,
-      responseBody: payload.responseBody,
-    };
     for (const item of arr) {
-      const rawData = extractFieldsFromAggregateItem(item, extractInput, rule.fields);
+      const rawData = extractFieldsWithConfig(rule.fields, input, item, config);
       const record = buildRecord(group, rule, payload, rawData, rawData);
       if (record) records.push(record);
     }
     return records.length ? records : null;
   }
 
-  const rawData = extractFields(input, rule.fields);
-  const single = buildRecord(group, rule, payload, rawData, rawData);
-  return single;
+  const rawData = extractFieldsWithConfig(rule.fields, input, null, config);
+  return buildRecord(group, rule, payload, rawData, rawData);
 }
 
 export function processCapture(
   group: RuleGroup,
   payload: RawRequestPayload,
+  config: AppConfig,
 ): CaptureRecord | CaptureRecord[] | null {
   const normalized = normalizeRuleGroup(group);
   if (!normalized.enabled) return null;
@@ -139,7 +120,7 @@ export function processCapture(
   const rule = normalized.rules[idx];
   if (!rule) return null;
 
-  return processRuleCapture(normalized, rule, payload);
+  return processRuleCapture(normalized, rule, payload, config);
 }
 
 export function validateRuleGroup(input: unknown): input is RuleGroup {

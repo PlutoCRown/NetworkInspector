@@ -1,16 +1,17 @@
 import { createEmptyRule } from "@/shared/create-empty-rule";
 import { normalizeRuleGroup } from "@/shared/normalize-rule-group";
-import type { Rule, RuleGroup } from "@/shared/types";
+import type { AppConfig, Rule, RuleGroup } from "@/shared/types";
 import { CaptureUrlsSection } from "./form/CaptureUrlsSection";
 import { GroupMetaSection } from "./form/GroupMetaSection";
 import { RuleBlockSection } from "./form/RuleBlockSection";
 
 interface RuleGroupFormProps {
   group: RuleGroup;
+  config: AppConfig;
   onChange: (group: RuleGroup) => void;
 }
 
-export function RuleGroupForm({ group, onChange }: RuleGroupFormProps) {
+export function RuleGroupForm({ group, config, onChange }: RuleGroupFormProps) {
   const g = normalizeRuleGroup(group);
 
   const setGroup = (patch: Partial<RuleGroup>) => {
@@ -67,6 +68,7 @@ export function RuleGroupForm({ group, onChange }: RuleGroupFormProps) {
           rule={rule}
           index={i}
           captureUrl={g.capture[i] ?? ""}
+          config={config}
           onUpdate={(patch) => updateRule(i, patch)}
         />
       ))}

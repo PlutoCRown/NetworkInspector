@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImportBundleDialog } from "@/components/ImportBundleDialog";
 import { useAppState, sendMessage } from "@/hooks/useAppState";
 import { useImportJson } from "@/hooks/useImportJson";
+import { message } from "@/lib/message";
 import { createEmptyRule } from "@/shared/rule/create-empty";
 import { normalizeRuleGroup } from "@/shared/rule/normalize";
 import type { AppConfig, RuleGroup } from "@/shared/types";
@@ -118,7 +119,7 @@ export function EditorApp() {
   const saveConfig = async () => {
     await sendMessage({ type: "SAVE_APP_CONFIG", config });
     await refresh();
-    alert("已保存");
+    message.success("已保存");
   };
 
   const save = async () => {
@@ -128,15 +129,21 @@ export function EditorApp() {
     await refresh();
     setGroup(normalized);
     setSelectedId(normalized.id);
-    alert("已保存");
+    message.success("已保存");
   };
 
   const deleteGroup = async () => {
     if (state.ruleGroups.length <= 1) {
-      alert("至少保留一个规则组");
+      message.warning("至少保留一个规则组");
       return;
     }
-    if (!confirm(`确定删除「${group.name}」？`)) return;
+    const ok = await message.confirm({
+      title: `删除「${group.name}」？`,
+      description: "此操作不可撤销。",
+      confirmLabel: "删除",
+      destructive: true,
+    });
+    if (!ok) return;
     await sendMessage({ type: "DELETE_RULE_GROUP", id: group.id });
     await refresh();
     const next = state.ruleGroups.find((g) => g.id !== group.id);
@@ -160,7 +167,7 @@ export function EditorApp() {
       setSelectedId(parsed.id);
       setJsonMode(false);
     } catch {
-      alert("JSON 解析失败");
+      message.error("JSON 解析失败");
     }
   };
 

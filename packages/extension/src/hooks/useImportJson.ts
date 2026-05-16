@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { sendMessage } from "@/hooks/useAppState";
+import { message } from "@/lib/message";
 import {
   type AppBundleStats,
   type AppExportBundle,
@@ -23,27 +24,29 @@ export function useImportJson(
 
   const openFilePicker = () => fileRef.current?.click();
 
-  const warnMissingRefs = (group: RuleGroup): boolean => {
+  const warnMissingRefs = async (group: RuleGroup): Promise<boolean> => {
     const missing = getMissingFieldRefs([group], currentConfig);
     if (!hasImportWarnings(missing)) return true;
-    return confirm(
-      `规则组引用了当前配置中不存在的 ID，相关功能可能无效：\n\n${formatImportWarnings(missing)}\n\n是否仍要导入？`,
-    );
+    return await message.confirm({
+      title: "存在未配置的引用",
+      description: `规则组引用了当前配置中不存在的 ID，相关功能可能无效：\n\n${formatImportWarnings(missing)}\n\n是否仍要导入？`,
+      confirmLabel: "仍要导入",
+    });
   };
 
   const importRuleGroup = async (group: RuleGroup) => {
-    if (!warnMissingRefs(group)) return;
+    if (!(await warnMissingRefs(group))) return;
     const res = await sendMessage<{ ok: boolean }>({
       type: "IMPORT_RULE_GROUP",
       group,
       overwrite: true,
     });
     if (!res.ok) {
-      alert("导入失败");
+      message.error("导入失败");
       return;
     }
     await onDone?.();
-    alert("规则组已导入");
+    message.success("规则组已导入");
   };
 
   const handleFile = async (file: File) => {
@@ -51,7 +54,7 @@ export function useImportJson(
     const detected = parseImportJson(text);
 
     if (detected.kind === "invalid") {
-      alert("无效的 JSON 文件");
+      message.error("无效的 JSON 文件");
       return;
     }
 
@@ -74,11 +77,11 @@ export function useImportJson(
     setBundleDialog(null);
     setPendingBundle(null);
     if (!res.ok) {
-      alert("导入失败");
+      message.error("导入失败");
       return;
     }
     await onDone?.();
-    alert("已导入所选内容");
+    message.success("已导入所选内容");
   };
 
   const cancelBundleImport = () => {

@@ -148,11 +148,6 @@ export function RuleBlockSection({
         <div key={field}>
           <Label className="mb-1 block">
             {field}
-            <span className="ml-1 font-normal text-muted-foreground">
-              {aggregateEnabled
-                ? "（aggregate / 来源 + Processor / Alias）"
-                : "（来源 + Processor / Alias）"}
-            </span>
           </Label>
           <FieldRefInput
             mode="field"

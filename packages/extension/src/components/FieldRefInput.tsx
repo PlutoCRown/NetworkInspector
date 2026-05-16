@@ -15,7 +15,6 @@ import {
   SOURCE_TAG_OPTIONS,
   type FieldExpr,
 } from "@/shared/field/expr";
-import { BUILTIN_PROCESSORS } from "@/shared/field/processors";
 import type { AppConfig, FieldSource } from "@/shared/types";
 import { cn } from "@/lib/utils";
 
@@ -123,15 +122,15 @@ export function FieldRefInput({
   const autocompleteItems: AutocompleteItem[] =
     slashActive && slashSeg
       ? buildAutocompleteItems({
-          mode,
-          query: slashSeg.query,
-          hasSource,
-          hasSplitRef,
-          splitNames,
-          processorIds: expr.processors,
-          hasAlias: Boolean(expr.aliasMap),
-          config,
-        })
+        mode,
+        query: slashSeg.query,
+        hasSource,
+        hasSplitRef,
+        splitNames,
+        processorIds: expr.processors,
+        hasAlias: Boolean(expr.aliasMap),
+        config,
+      })
       : [];
 
   const showAutocomplete = slashActive && autocompleteItems.length > 0;
@@ -264,14 +263,11 @@ export function FieldRefInput({
     }
   };
 
-  const processorOptions = [
-    ...BUILTIN_PROCESSORS,
-    ...Object.keys(config.customProcessors).map((id) => ({
-      id,
-      label: id,
-      description: "自定义",
-    })),
-  ];
+  const processorOptions = Object.keys(config.customProcessors).map((id) => ({
+    id,
+    label: id,
+    description: "Processor",
+  }));
   const aliasOptions = Object.entries(config.aliasMaps).map(([mapkey, group]) => ({
     mapkey,
     label: group.name ? `${group.name} (${mapkey})` : mapkey,

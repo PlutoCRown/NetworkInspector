@@ -1,26 +1,49 @@
-import { Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { BUILTIN_PROCESSORS } from "@/shared/field/processors";
 import type { AppConfig } from "@/shared/types";
 
 interface ProcessorSectionProps {
   config: AppConfig;
+  processorId: string | null;
   onChange: (config: AppConfig) => void;
+  onRemove: (id: string) => void;
+  onIdChange: (id: string) => void;
 }
 
-export function ProcessorSection({ config, onChange }: ProcessorSectionProps) {
-  const customIds = Object.keys(config.customProcessors);
+export function ProcessorSection({
+  config,
+  processorId,
+  onChange,
+  onRemove,
+  onIdChange,
+}: ProcessorSectionProps) {
+  if (!processorId || !config.customProcessors[processorId]) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        在左侧选择 Processor，或新建一个。示例（time / date / datetime）可直接编辑或删除。
+      </p>
+    );
+  }
 
-  const addProcessor = () => {
-    const id = `fn-${Date.now()}`;
+  const updateId = (nextId: string) => {
+    if (!nextId.trim() || nextId === processorId) return;
+    const body = config.customProcessors[processorId]!;
+    const next = { ...config.customProcessors };
+    delete next[processorId];
+    next[nextId] = body;
+    onChange({ ...config, customProcessors: next });
+    onIdChange(nextId);
+  };
+
+  const updateBody = (body: string) => {
     onChange({
       ...config,
       customProcessors: {
         ...config.customProcessors,
-        [id]: "(value) => value",
+        [processorId]: body,
       },
     });
   };
@@ -30,78 +53,40 @@ export function ProcessorSection({ config, onChange }: ProcessorSectionProps) {
       <div>
         <h2 className="font-medium">Processor</h2>
         <p className="text-xs text-muted-foreground">
-          内置 Processor 可直接在字段中使用；自定义函数签名为 (value) =&gt; 任意
+          编写 JS 函数体，签名为 <code className="text-foreground">(value) =&gt; 任意</code>
+          ，字段中使用 <code className="text-foreground">[processor:ID]</code>
         </p>
       </div>
 
-      <div className="space-y-2 rounded-lg border p-4">
-        <Label>内置</Label>
-        <ul className="text-xs text-muted-foreground">
-          {BUILTIN_PROCESSORS.map((p) => (
-            <li key={p.id}>
-              <code className="text-foreground">{p.id}</code> — {p.description}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="space-y-2 rounded-lg border p-4">
-        <div className="flex items-center justify-between">
-          <Label>自定义 Processor</Label>
-          <Button type="button" size="sm" variant="outline" onClick={addProcessor}>
-            <Plus className="h-4 w-4" />
+      <div className="space-y-3 rounded-lg border p-4">
+        <div className="flex items-center justify-between gap-2">
+          <Label className="text-[10px] text-muted-foreground">ID</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            onClick={() => onRemove(processorId)}
+            aria-label="删除 Processor"
+          >
+            <Trash2 className="size-4" />
           </Button>
         </div>
-        {customIds.length === 0 ? (
-          <p className="text-xs text-muted-foreground">暂无自定义 Processor</p>
-        ) : (
-          <ul className="space-y-3">
-            {customIds.map((id) => (
-              <li key={id} className="space-y-1 rounded-md border p-2">
-                <div className="flex items-center gap-2">
-                  <Input
-                    className="h-8 font-mono text-xs"
-                    value={id}
-                    onChange={(e) => {
-                      const next = { ...config.customProcessors };
-                      const body = next[id]!;
-                      delete next[id];
-                      next[e.target.value] = body;
-                      onChange({ ...config, customProcessors: next });
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      const next = { ...config.customProcessors };
-                      delete next[id];
-                      onChange({ ...config, customProcessors: next });
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                <Textarea
-                  className="font-mono text-xs"
-                  rows={3}
-                  value={config.customProcessors[id]}
-                  onChange={(e) =>
-                    onChange({
-                      ...config,
-                      customProcessors: {
-                        ...config.customProcessors,
-                        [id]: e.target.value,
-                      },
-                    })
-                  }
-                  placeholder="(value) => String(value)"
-                />
-              </li>
-            ))}
-          </ul>
-        )}
+        <Input
+          className="font-mono text-xs"
+          value={processorId}
+          onChange={(e) => updateId(e.target.value)}
+        />
+
+        <div className="space-y-1">
+          <Label className="text-[10px] text-muted-foreground">函数体</Label>
+          <Textarea
+            className="min-h-[200px] font-mono text-xs"
+            value={config.customProcessors[processorId]}
+            onChange={(e) => updateBody(e.target.value)}
+            placeholder="(value) => String(value)"
+          />
+        </div>
       </div>
     </section>
   );

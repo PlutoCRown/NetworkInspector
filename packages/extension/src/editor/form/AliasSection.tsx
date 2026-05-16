@@ -7,12 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { message } from "@/lib/message";
 import type { AliasMapGroup, AppConfig } from "@/shared/types";
 
-interface AliasSectionProps {
-  config: AppConfig;
-  onChange: (config: AppConfig) => void;
-}
-
-function newMapkey(): string {
+export function newAliasMapkey(): string {
   return `alias-${Date.now().toString(36)}`;
 }
 
@@ -107,7 +102,7 @@ function AliasMapGroupCard({ mapkey, group, onUpdate, onRemove }: AliasMapGroupC
   };
 
   return (
-    <li className="space-y-3 rounded-md border p-3">
+    <div className="space-y-3 rounded-lg border p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1 space-y-1">
           <Label className="text-[10px] text-muted-foreground">组名</Label>
@@ -206,38 +201,25 @@ function AliasMapGroupCard({ mapkey, group, onUpdate, onRemove }: AliasMapGroupC
           </ul>
         )}
       </div>
-    </li>
+    </div>
   );
 }
 
-export function AliasSection({ config, onChange }: AliasSectionProps) {
-  const entries = Object.entries(config.aliasMaps);
+interface AliasSectionProps {
+  config: AppConfig;
+  mapkey: string | null;
+  onChange: (config: AppConfig) => void;
+  onRemove: (mapkey: string) => void;
+}
 
-  const addAliasMap = () => {
-    const mapkey = newMapkey();
-    onChange({
-      ...config,
-      aliasMaps: {
-        ...config.aliasMaps,
-        [mapkey]: { name: "新 Alias 组", mappings: {} },
-      },
-    });
-  };
+export function AliasSection({ config, mapkey, onChange, onRemove }: AliasSectionProps) {
+  const group = mapkey ? config.aliasMaps[mapkey] : null;
 
-  const updateGroup = (mapkey: string, patch: Partial<AliasMapGroup>) => {
-    const group = config.aliasMaps[mapkey];
-    if (!group) return;
-    onChange({
-      ...config,
-      aliasMaps: { ...config.aliasMaps, [mapkey]: { ...group, ...patch } },
-    });
-  };
-
-  const removeGroup = (mapkey: string) => {
-    const maps = { ...config.aliasMaps };
-    delete maps[mapkey];
-    onChange({ ...config, aliasMaps: maps });
-  };
+  if (!mapkey || !group) {
+    return (
+      <p className="text-sm text-muted-foreground">在左侧选择 Alias 组，或新建一个。</p>
+    );
+  }
 
   return (
     <section className="mx-auto max-w-2xl space-y-4">
@@ -248,30 +230,17 @@ export function AliasSection({ config, onChange }: AliasSectionProps) {
           <code className="text-foreground">[alias:ID]</code> 引用
         </p>
       </div>
-
-      <div className="space-y-2 rounded-lg border p-4">
-        <div className="flex items-center justify-between">
-          <Label>Alias 映射表</Label>
-          <Button type="button" size="sm" variant="outline" onClick={addAliasMap}>
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-        {entries.length === 0 ? (
-          <p className="text-xs text-muted-foreground">暂无 Alias 组</p>
-        ) : (
-          <ul className="space-y-3">
-            {entries.map(([mapkey, group]) => (
-              <AliasMapGroupCard
-                key={mapkey}
-                mapkey={mapkey}
-                group={group}
-                onUpdate={(patch) => updateGroup(mapkey, patch)}
-                onRemove={() => removeGroup(mapkey)}
-              />
-            ))}
-          </ul>
-        )}
-      </div>
+      <AliasMapGroupCard
+        mapkey={mapkey}
+        group={group}
+        onUpdate={(patch) =>
+          onChange({
+            ...config,
+            aliasMaps: { ...config.aliasMaps, [mapkey]: { ...group, ...patch } },
+          })
+        }
+        onRemove={() => onRemove(mapkey)}
+      />
     </section>
   );
 }

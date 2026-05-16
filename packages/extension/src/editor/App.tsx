@@ -12,7 +12,7 @@ import type { AppConfig, RuleGroup } from "@/shared/types";
 import { DEFAULT_APP_CONFIG } from "@/shared/types";
 import { EditorSidebar, type EditorNavSection } from "./EditorSidebar";
 import { AboutSection } from "./form/AboutSection";
-import { AliasSection } from "./form/AliasSection";
+import { AliasSection, newAliasMapkey } from "./form/AliasSection";
 import { ProcessorSection } from "./form/ProcessorSection";
 import { RuleGroupForm } from "./RuleGroupForm";
 
@@ -40,6 +40,8 @@ export function EditorApp() {
   const [jsonMode, setJsonMode] = useState(false);
   const [jsonText, setJsonText] = useState("");
   const [section, setSection] = useState<EditorNavSection>("rule-groups");
+  const [selectedProcessorId, setSelectedProcessorId] = useState<string | null>(null);
+  const [selectedAliasKey, setSelectedAliasKey] = useState<string | null>(null);
   const [configDraft, setConfigDraft] = useState<AppConfig | null>(null);
   const initialized = useRef(false);
 
@@ -171,19 +173,58 @@ export function EditorApp() {
     }
   };
 
+  const processorIds = Object.keys(config.customProcessors);
+  const aliasGroup = selectedAliasKey ? config.aliasMaps[selectedAliasKey] : null;
+
   const headerTitle = {
     "rule-groups": group.name,
-    processors: "Processor",
-    alias: "Alias",
+    processors: selectedProcessorId ?? "Processor",
+    alias: aliasGroup?.name ?? selectedAliasKey ?? "Alias",
     about: "About",
   }[section];
 
   const headerDesc = {
     "rule-groups": "规则组编辑",
-    processors: "内置与自定义 Processor",
-    alias: "全局 Alias 映射表",
+    processors: "Processor 函数编辑",
+    alias: "Alias 映射表",
     about: "版本信息与数据导出",
   }[section];
+
+  const addProcessor = () => {
+    const id = `fn-${Date.now().toString(36)}`;
+    setConfigDraft({
+      ...config,
+      customProcessors: { ...config.customProcessors, [id]: "(value) => value" },
+    });
+    setSelectedProcessorId(id);
+    setSection("processors");
+  };
+
+  const removeProcessor = (id: string) => {
+    const next = { ...config.customProcessors };
+    delete next[id];
+    setConfigDraft({ ...config, customProcessors: next });
+    const remaining = Object.keys(next);
+    setSelectedProcessorId(remaining[0] ?? null);
+  };
+
+  const addAlias = () => {
+    const mapkey = newAliasMapkey();
+    setConfigDraft({
+      ...config,
+      aliasMaps: { ...config.aliasMaps, [mapkey]: { name: "新 Alias 组", mappings: {} } },
+    });
+    setSelectedAliasKey(mapkey);
+    setSection("alias");
+  };
+
+  const removeAlias = (mapkey: string) => {
+    const next = { ...config.aliasMaps };
+    delete next[mapkey];
+    setConfigDraft({ ...config, aliasMaps: next });
+    const remaining = Object.keys(next);
+    setSelectedAliasKey(remaining[0] ?? null);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -191,10 +232,16 @@ export function EditorApp() {
         section={section}
         onSectionChange={setSection}
         ruleGroups={state.ruleGroups}
-        selectedId={selectedId}
+        config={config}
+        selectedGroupId={selectedId}
+        selectedProcessorId={selectedProcessorId}
+        selectedAliasKey={selectedAliasKey}
         onSelectGroup={selectGroup}
         onNewGroup={() => selectGroup("new")}
-        onImportJson={importJson.openFilePicker}
+        onSelectProcessor={setSelectedProcessorId}
+        onNewProcessor={addProcessor}
+        onSelectAlias={setSelectedAliasKey}
+        onNewAlias={addAlias}
       />
 
       <input
@@ -254,9 +301,27 @@ export function EditorApp() {
         </header>
 
         {section === "processors" && (
-          <ProcessorSection config={config} onChange={setConfigDraft} />
+          <ProcessorSection
+            config={config}
+            processorId={selectedProcessorId}
+            onChange={(next) => {
+              setConfigDraft(next);
+              if (selectedProcessorId && !(selectedProcessorId in next.customProcessors)) {
+                setSelectedProcessorId(Object.keys(next.customProcessors)[0] ?? null);
+              }
+            }}
+            onRemove={removeProcessor}
+            onIdChange={setSelectedProcessorId}
+          />
         )}
-        {section === "alias" && <AliasSection config={config} onChange={setConfigDraft} />}
+        {section === "alias" && (
+          <AliasSection
+            config={config}
+            mapkey={selectedAliasKey}
+            onChange={setConfigDraft}
+            onRemove={removeAlias}
+          />
+        )}
         {section === "about" && <AboutSection state={state} importJson={importJson} />}
         {section === "rule-groups" &&
           (jsonMode ? (

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "vite build",
+    "typecheck": "tsgo -p tsconfig.json",
     "test": "bun test ./src/shared"
   },
   "dependencies": {
@@ -28,9 +29,9 @@
     "@types/chrome": "^0.0.309",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
+    "@typescript/native-preview": "7.0.0-dev.20260516.1",
     "@vitejs/plugin-react": "^5.2.0",
     "tailwindcss": "^4.3.0",
-    "typescript": "^5.8.2",
     "vite": "^8.0.13"
   }
 }

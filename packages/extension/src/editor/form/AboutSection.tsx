@@ -44,7 +44,7 @@ export function AboutSection({ state, importJson }: AboutSectionProps) {
         </div>
         <div className="flex justify-between gap-4">
           <dt className="text-muted-foreground">Processor</dt>
-          <dd>{Object.keys(state.config.customProcessors).length} 个自定义</dd>
+          <dd>{Object.keys(state.config.customProcessors).length} 个</dd>
         </div>
         <div className="flex justify-between gap-4">
           <dt className="text-muted-foreground">Alias 组</dt>

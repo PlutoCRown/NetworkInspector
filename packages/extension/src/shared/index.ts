@@ -57,12 +57,8 @@ export {
   type ImportDependencyWarning,
 } from "./field/refs";
 export { resolveFieldExpr, resolveSplitArray, type SplitContext } from "./field/resolve";
-export {
-  applyAliasMap,
-  BUILTIN_PROCESSORS,
-  runProcessor,
-  runProcessors,
-} from "./field/processors";
+export { applyAliasMap, runProcessor, runProcessors } from "./field/processors";
+export { EXAMPLE_PROCESSORS } from "./field/processor-examples";
 
 export { createEmptyRule } from "./rule/create-empty";
 export { normalizeRuleGroup } from "./rule/normalize";

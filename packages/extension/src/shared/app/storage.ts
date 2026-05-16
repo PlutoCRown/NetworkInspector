@@ -35,9 +35,16 @@ export async function loadState(): Promise<AppState> {
   const captureEnabled =
     (result[STORAGE_KEYS.captureEnabled] as boolean | undefined) ?? true;
 
+  const storedConfig: Partial<AppConfig> =
+    (result[STORAGE_KEYS.config] as AppConfig | undefined) ?? {};
   const config = normalizeAppConfig({
     ...DEFAULT_APP_CONFIG,
-    ...((result[STORAGE_KEYS.config] as AppConfig | undefined) ?? {}),
+    ...storedConfig,
+    aliasMaps: { ...DEFAULT_APP_CONFIG.aliasMaps, ...storedConfig.aliasMaps },
+    customProcessors: {
+      ...DEFAULT_APP_CONFIG.customProcessors,
+      ...storedConfig.customProcessors,
+    },
   });
 
   return {

@@ -1,8 +1,5 @@
 import { parseFieldExpr } from "./expr";
-import { BUILTIN_PROCESSORS } from "./processors";
 import type { AppConfig, RuleGroup } from "../types";
-
-const BUILTIN_PROCESSOR_IDS = new Set(BUILTIN_PROCESSORS.map((p) => p.id));
 
 export interface FieldRefIds {
   processors: string[];
@@ -17,7 +14,7 @@ export interface ImportDependencyWarning {
 function collectFromFieldRaw(raw: string, processors: Set<string>, aliases: Set<string>) {
   const expr = parseFieldExpr(raw);
   for (const id of expr.processors) {
-    if (!BUILTIN_PROCESSOR_IDS.has(id)) processors.add(id);
+    processors.add(id);
   }
   if (expr.aliasMap) aliases.add(expr.aliasMap);
 }

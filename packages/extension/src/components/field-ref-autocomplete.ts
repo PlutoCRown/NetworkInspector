@@ -1,5 +1,4 @@
 import { SOURCE_TAG_OPTIONS } from "@/shared/field/expr";
-import { BUILTIN_PROCESSORS } from "@/shared/field/processors";
 import type { AppConfig, FieldSource } from "@/shared/types";
 export type FieldRefInputMode = "split-source" | "field";
 
@@ -60,17 +59,6 @@ export function buildAutocompleteItems(ctx: AutocompleteContext): AutocompleteIt
   }
 
   if (hasSource || hasSplitRef) {
-    for (const p of BUILTIN_PROCESSORS) {
-      if (processorIds.includes(p.id)) continue;
-      if (matches(query, p.id, p.label, `processor:${p.id}`, "processor")) {
-        items.push({
-          id: `processor:${p.id}`,
-          label: `processor:${p.id}`,
-          hint: p.description,
-          group: "Processor",
-        });
-      }
-    }
     for (const id of Object.keys(config.customProcessors)) {
       if (processorIds.includes(id)) continue;
       if (matches(query, id, `processor:${id}`, "processor")) {

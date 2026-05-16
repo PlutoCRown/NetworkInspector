@@ -9,6 +9,7 @@ export type {
 } from "@network-inspector/presets";
 
 import type { RuleGroup } from "@network-inspector/presets";
+import { EXAMPLE_PROCESSORS } from "./field/processor-examples";
 
 export interface CaptureRecord {
   id: string;
@@ -51,7 +52,7 @@ export interface AppConfig {
 
 export const DEFAULT_APP_CONFIG: AppConfig = {
   aliasMaps: {},
-  customProcessors: {},
+  customProcessors: { ...EXAMPLE_PROCESSORS },
 };
 
 export interface AppState {

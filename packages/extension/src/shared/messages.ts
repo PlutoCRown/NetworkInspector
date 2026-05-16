@@ -5,11 +5,12 @@ export type Message =
   | { type: "GET_STATE" }
   | { type: "CAPTURE_ADDED"; capture: CaptureRecord; captures: CaptureRecord[] }
   | { type: "STATE_UPDATED"; state: import("./types").AppState }
-  | { type: "TOGGLE_ENABLED" }
+  | { type: "TOGGLE_RULE_GROUP"; id: string }
+  | { type: "TOGGLE_CAPTURE_ENABLED" }
   | { type: "SET_ACTIVE_GROUP"; id: string }
+  | { type: "RELOAD_STATE" }
   | { type: "IMPORT_RULE_GROUP"; group: RuleGroup; overwrite?: boolean }
   | { type: "SAVE_RULE_GROUP"; group: RuleGroup }
   | { type: "DELETE_RULE_GROUP"; id: string }
   | { type: "CLEAR_CAPTURES" }
-  | { type: "OPEN_SIDE_PANEL" }
-  | { type: "OPEN_EDITOR" };
+  | { type: "OPEN_EDITOR"; ruleGroupId?: string };

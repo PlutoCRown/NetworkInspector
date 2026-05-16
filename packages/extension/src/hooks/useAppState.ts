@@ -7,7 +7,7 @@ export function useAppState() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const res = await chrome.runtime.sendMessage({ type: "GET_STATE" } satisfies Message);
+    const res = await chrome.runtime.sendMessage({ type: "RELOAD_STATE" } satisfies Message);
     setState(res as AppState);
     setLoading(false);
   }, []);

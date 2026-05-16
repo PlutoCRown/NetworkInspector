@@ -68,13 +68,17 @@ export interface RawRequestPayload {
 
 export interface AppState {
   ruleGroups: RuleGroup[];
+  /** 编辑器上次选中的规则组 */
   activeRuleGroupId: string | null;
+  /** 总开关：关闭后不再产生新捕获 */
+  captureEnabled: boolean;
   captures: CaptureRecord[];
 }
 
 export const STORAGE_KEYS = {
   ruleGroups: "ni_rule_groups",
   activeRuleGroupId: "ni_active_rule_group_id",
+  captureEnabled: "ni_capture_enabled",
   captures: "ni_captures",
 } as const;
 

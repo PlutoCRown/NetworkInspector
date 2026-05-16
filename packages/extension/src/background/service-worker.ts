@@ -5,10 +5,12 @@ import {
   clearCaptures,
   loadState,
   saveActiveRuleGroupId,
+  saveCaptureEnabled,
   saveRuleGroups,
 } from "../shared/storage";
 import type { AppState, RuleGroup } from "../shared/types";
 
+// 点击图标展开 popup，不直接打开侧边栏
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
 
 async function broadcastState(state: AppState): Promise<void> {
@@ -20,28 +22,26 @@ async function getState(): Promise<AppState> {
   return loadState();
 }
 
-async function getActiveGroup(): Promise<RuleGroup | null> {
-  const state = await getState();
-  if (!state.activeRuleGroupId) return null;
-  return state.ruleGroups.find((g) => g.id === state.activeRuleGroupId) ?? null;
-}
-
 async function handleRawRequest(
   payload: import("../shared/types").RawRequestPayload,
 ): Promise<void> {
-  const group = await getActiveGroup();
-  if (!group) return;
+  const state = await getState();
+  if (!state.captureEnabled) return;
+  const enabledGroups = state.ruleGroups.filter((g) => g.enabled);
+  if (enabledGroups.length === 0) return;
 
-  const capture = processCapture(group, payload);
-  if (!capture) return;
-
-  const captures = await appendCapture(capture);
-  const msg: Message = {
-    type: "CAPTURE_ADDED",
-    capture,
-    captures,
-  };
-  chrome.runtime.sendMessage(msg).catch(() => {});
+  let captures = state.captures;
+  for (const group of enabledGroups) {
+    const capture = processCapture(group, payload);
+    if (!capture) continue;
+    captures = await appendCapture(capture);
+    const msg: Message = {
+      type: "CAPTURE_ADDED",
+      capture,
+      captures,
+    };
+    chrome.runtime.sendMessage(msg).catch(() => {});
+  }
 }
 
 chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
@@ -59,15 +59,26 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
         sendResponse(await getState());
         break;
       }
-      case "TOGGLE_ENABLED": {
+      case "TOGGLE_RULE_GROUP": {
         const state = await getState();
-        const group = state.ruleGroups.find((g) => g.id === state.activeRuleGroupId);
+        const group = state.ruleGroups.find((g) => g.id === message.id);
         if (group) {
           group.enabled = !group.enabled;
           await saveRuleGroups(state.ruleGroups);
           await broadcastState(await getState());
         }
         sendResponse({ ok: true });
+        break;
+      }
+      case "TOGGLE_CAPTURE_ENABLED": {
+        const state = await getState();
+        await saveCaptureEnabled(!state.captureEnabled);
+        await broadcastState(await getState());
+        sendResponse({ ok: true });
+        break;
+      }
+      case "RELOAD_STATE": {
+        sendResponse(await getState());
         break;
       }
       case "SET_ACTIVE_GROUP": {
@@ -126,21 +137,12 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
         sendResponse({ ok: true });
         break;
       }
-      case "OPEN_SIDE_PANEL": {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tab?.windowId) {
-          await chrome.sidePanel.open({ windowId: tab.windowId });
-        }
-        sendResponse({ ok: true });
-        break;
-      }
       case "OPEN_EDITOR": {
-        await chrome.windows.create({
-          url: chrome.runtime.getURL("src/editor/index.html"),
-          type: "popup",
-          width: 960,
-          height: 720,
-        });
+        const base = chrome.runtime.getURL("src/editor/index.html");
+        const url = message.ruleGroupId
+          ? `${base}?id=${encodeURIComponent(message.ruleGroupId)}`
+          : base;
+        await chrome.tabs.create({ url });
         sendResponse({ ok: true });
         break;
       }

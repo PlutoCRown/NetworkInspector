@@ -6,6 +6,7 @@ export async function loadState(): Promise<AppState> {
   const result = await chrome.storage.local.get([
     STORAGE_KEYS.ruleGroups,
     STORAGE_KEYS.activeRuleGroupId,
+    STORAGE_KEYS.captureEnabled,
     STORAGE_KEYS.captures,
   ]);
 
@@ -21,7 +22,14 @@ export async function loadState(): Promise<AppState> {
 
   const captures = (result[STORAGE_KEYS.captures] as CaptureRecord[] | undefined) ?? [];
 
-  return { ruleGroups, activeRuleGroupId, captures };
+  const captureEnabled =
+    (result[STORAGE_KEYS.captureEnabled] as boolean | undefined) ?? true;
+
+  return { ruleGroups, activeRuleGroupId, captureEnabled, captures };
+}
+
+export async function saveCaptureEnabled(enabled: boolean): Promise<void> {
+  await chrome.storage.local.set({ [STORAGE_KEYS.captureEnabled]: enabled });
 }
 
 export async function saveRuleGroups(ruleGroups: RuleGroup[]): Promise<void> {

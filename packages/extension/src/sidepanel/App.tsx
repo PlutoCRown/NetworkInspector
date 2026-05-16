@@ -32,7 +32,7 @@ export function SidePanelApp() {
 
       <div className="flex-1 overflow-y-auto p-3">
         {!globalOn && (
-          <p className="mb-2 rounded-md bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
+          <p className="mb-2 rounded-md bg-amber-50 px-2 py-1.5 text-xs text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
             总开关已关闭，不再产生新捕获
           </p>
         )}

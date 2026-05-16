@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "bun test ./src/shared/pipeline.test.ts ../../presets/src/parse-template.test.ts"
+    "test": "bun test ./src/shared/pipeline.test.ts"
   },
   "dependencies": {
     "@network-inspector/presets": "workspace:*",

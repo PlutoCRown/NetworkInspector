@@ -1,17 +1,8 @@
-import {
-  createBuiltinRegistry,
-  type ParsedRenderer,
-} from "@network-inspector/presets";
-import cardTpl from "@network-inspector/presets/renderers/card.tpl?raw";
-import dividerTpl from "@network-inspector/presets/renderers/divider.tpl?raw";
+import { RENDERER_DEFINITIONS, type RendererDefinition } from "@network-inspector/presets";
 
-/** 模块加载时预解析所有内置 .tpl（不随用户选择 renderer 再解析） */
-export const BUILTIN_RENDERERS: ParsedRenderer[] = createBuiltinRegistry({
-  card: cardTpl,
-  divider: dividerTpl,
-});
+export { RENDERER_DEFINITIONS, type RendererDefinition };
 
-const RENDERER_MAP = new Map(BUILTIN_RENDERERS.map((r) => [r.id, r]));
+const RENDERER_MAP = new Map(RENDERER_DEFINITIONS.map((r) => [r.id, r]));
 
 /** 兼容旧配置 */
 const LEGACY_ALIASES: Record<string, string> = {
@@ -23,12 +14,12 @@ export function resolveRendererId(id: string): string {
   return LEGACY_ALIASES[id] ?? id;
 }
 
-export function getBuiltinRenderer(id: string): ParsedRenderer | undefined {
+export function getRendererDefinition(id: string): RendererDefinition | undefined {
   return RENDERER_MAP.get(resolveRendererId(id));
 }
 
 export function getRendererFields(rendererId: string): string[] {
-  return getBuiltinRenderer(rendererId)?.fields ?? ["title"];
+  return getRendererDefinition(rendererId)?.fields ?? ["title"];
 }
 
 export function defaultFieldsForRenderer(

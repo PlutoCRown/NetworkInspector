@@ -74,7 +74,9 @@ export function PopupApp() {
       <div
         className={cn(
           "flex items-center justify-between rounded-lg border px-3 py-2.5",
-          globalOn ? "border-green-300 bg-green-50" : "border-border bg-muted/40",
+          globalOn
+            ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/50"
+            : "border-border bg-muted/40",
         )}
       >
         <div>
@@ -121,7 +123,9 @@ export function PopupApp() {
                   key={group.id}
                   className={cn(
                     "flex items-center gap-2 rounded-lg border p-2",
-                    activeCapture && siteOk && "border-green-200 bg-green-50/80",
+                    activeCapture &&
+                    siteOk &&
+                    "border-green-200 bg-green-50/80 dark:border-green-800 dark:bg-green-950/40",
                     activeCapture && !siteOk && "border-border bg-muted/30 opacity-60",
                     !activeCapture && "border-border bg-muted/20",
                   )}

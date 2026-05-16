@@ -1,13 +1,19 @@
 import type { CaptureRecord } from "@/shared/types";
+import { resolveRendererId } from "@/shared/renderer-registry";
 import { Badge } from "@/components/ui/badge";
-import { TemplateCapture } from "./TemplateCapture";
+import { CardCapture } from "./renderers/CardCapture";
+import { DividerCapture } from "./renderers/DividerCapture";
 
 interface CaptureCardProps {
   record: CaptureRecord;
 }
 
 export function CaptureCard({ record }: CaptureCardProps) {
-  return <TemplateCapture record={record} />;
+  const rendererId = resolveRendererId(record.renderer);
+  if (rendererId === "divider") {
+    return <DividerCapture record={record} />;
+  }
+  return <CardCapture record={record} />;
 }
 
 export function CaptureListHeader({

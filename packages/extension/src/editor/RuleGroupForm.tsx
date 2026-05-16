@@ -7,8 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { FieldRefInput } from "@/components/FieldRefInput";
 import { normalizeRuleGroup } from "@/shared/normalize-rule-group";
 import {
-  BUILTIN_RENDERERS,
   defaultFieldsForRenderer,
+  RENDERER_DEFINITIONS,
   resolveRendererId,
 } from "@/shared/renderer-registry";
 import type { Rule, RuleGroup } from "@/shared/types";
@@ -146,7 +146,7 @@ export function RuleGroupForm({ group, onChange }: RuleGroupFormProps) {
 
       {g.rules.map((rule, i) => {
         const rid = resolveRendererId(rule.renderer);
-        const rendererDef = BUILTIN_RENDERERS.find((r) => r.id === rid);
+        const rendererDef = RENDERER_DEFINITIONS.find((r) => r.id === rid);
         const fieldKeys = rendererDef?.fields ?? ["title"];
 
         return (
@@ -183,7 +183,7 @@ export function RuleGroupForm({ group, onChange }: RuleGroupFormProps) {
                 value={rid}
                 onChange={(e) => onRendererChange(i, e.target.value)}
               >
-                {BUILTIN_RENDERERS.map((r) => (
+                {RENDERER_DEFINITIONS.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.label}
                   </option>
@@ -191,7 +191,7 @@ export function RuleGroupForm({ group, onChange }: RuleGroupFormProps) {
               </select>
               {rendererDef && (
                 <p className="mt-1 text-[10px] text-muted-foreground">
-                  字段由模板预解析：{rendererDef.fields.join(", ") || "无"}
+                  字段：{rendererDef.fields.join(", ") || "无"}
                 </p>
               )}
             </div>

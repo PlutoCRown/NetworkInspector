@@ -5,6 +5,6 @@
   "scripts": {
     "dev": "bun run --filter @network-inspector/extension dev",
     "build": "bun run --filter @network-inspector/extension build",
-    "test": "bun test packages/presets/src/parse-template.test.ts && bun run --filter @network-inspector/extension test"
+    "test": "bun run --filter @network-inspector/extension test"
   }
 }

@@ -5,7 +5,6 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./renderers/*": "./renderers/*",
     "./rule-groups/*": "./rule-groups/*"
   }
 }

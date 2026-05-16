@@ -161,8 +161,8 @@ export function EditorApp() {
                   <span
                     className={cn(
                       "h-2 w-2 shrink-0 rounded-full",
-                      g.enabled ? "bg-green-500" : "bg-gray-300",
-                      selectedId === g.id && "ring-1 ring-white/50",
+                      g.enabled ? "bg-green-500 dark:bg-green-400" : "bg-muted-foreground/40",
+                      selectedId === g.id && "ring-1 ring-primary-foreground/50",
                     )}
                   />
                   <span className="truncate">{g.name}</span>

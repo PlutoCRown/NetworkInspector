@@ -1,6 +1,6 @@
 export type FieldSource = "query" | "json" | "form-data" | "header" | "aggregate";
 
-export type RendererId = "card" | "divider" | "custom";
+export type RendererId = "card" | "divider";
 
 export interface AliasRule {
   field: string;
@@ -35,7 +35,6 @@ export interface Rule {
   highlights?: HighlightRule[];
   filters?: FilterRule[];
   decode?: string;
-  template?: string;
 }
 
 export interface RuleGroup {
@@ -46,7 +45,6 @@ export interface RuleGroup {
   sites: string[];
   capture: string[];
   rules: Rule[];
-  template?: string;
   decode?: string;
 }
 

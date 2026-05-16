@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -11,16 +11,17 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { ImportBundleDialog } from "@/components/ImportBundleDialog";
 import { useAppState, sendMessage } from "@/hooks/useAppState";
+import { useImportJson } from "@/hooks/useImportJson";
 import { openEditorTab, openSidePanel } from "@/lib/chrome-api";
-import { validateRuleGroup } from "@/shared/pipeline";
 import { matchesAny } from "@/shared/regex";
 import type { RuleGroup } from "@/shared/types";
 import { cn } from "@/lib/utils";
 
 export function PopupApp() {
   const { state, refresh } = useAppState();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const importJson = useImportJson(refresh);
   const [tabUrl, setTabUrl] = useState<string | null>(null);
   const [groupsExpanded, setGroupsExpanded] = useState(false);
 
@@ -42,22 +43,6 @@ export function PopupApp() {
   const effectiveCount = globalOn
     ? groups.filter((g) => g.enabled && siteMatches(g)).length
     : 0;
-
-  const handleImportFile = async (file: File) => {
-    const text = await file.text();
-    const json = JSON.parse(text) as RuleGroup;
-    if (!validateRuleGroup(json)) {
-      alert("无效的规则组 JSON");
-      return;
-    }
-    const res = await sendMessage<{ ok: boolean }>({
-      type: "IMPORT_RULE_GROUP",
-      group: json,
-      overwrite: true,
-    });
-    if (!res.ok) alert("导入失败");
-    else await refresh();
-  };
 
   const handleRefresh = () => {
     void sendMessage({ type: "RELOAD_STATE" }).then(() => {
@@ -114,11 +99,19 @@ export function PopupApp() {
       <Button
         variant="outline"
         className="w-full justify-start"
-        onClick={() => openEditorTab(undefined, { view: "settings" })}
+        onClick={() => openEditorTab(undefined, { view: "processors" })}
       >
         <Settings className="h-4 w-4" />
-        全局配置
+        设置
       </Button>
+
+      {importJson.bundleDialog && (
+        <ImportBundleDialog
+          stats={importJson.bundleDialog}
+          onCancel={importJson.cancelBundleImport}
+          onConfirm={importJson.confirmBundleImport}
+        />
+      )}
 
       <section className="overflow-hidden rounded-lg border">
         <div className="flex items-center gap-2 bg-muted/30 px-3 py-2">
@@ -147,19 +140,19 @@ export function PopupApp() {
             size="icon"
             variant="ghost"
             className="h-8 w-8 shrink-0"
-            onClick={() => fileRef.current?.click()}
+            onClick={importJson.openFilePicker}
             title="导入 JSON"
           >
             <FileUp className="h-4 w-4" />
           </Button>
           <input
-            ref={fileRef}
+            ref={importJson.fileRef}
             type="file"
             accept="application/json,.json"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
-              if (f) void handleImportFile(f);
+              if (f) void importJson.handleFile(f);
               e.target.value = "";
             }}
           />

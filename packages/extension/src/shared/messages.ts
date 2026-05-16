@@ -1,3 +1,4 @@
+import type { AppExportBundle, ImportBundleOptions } from "./app-bundle";
 import type { AppConfig, CaptureRecord, RawRequestPayload, RuleGroup } from "./types";
 
 export type Message =
@@ -14,4 +15,9 @@ export type Message =
   | { type: "DELETE_RULE_GROUP"; id: string }
   | { type: "CLEAR_CAPTURES" }
   | { type: "SAVE_APP_CONFIG"; config: AppConfig }
+  | {
+    type: "IMPORT_APP_BUNDLE";
+    bundle: AppExportBundle;
+    options: ImportBundleOptions;
+  }
   | { type: "OPEN_EDITOR"; ruleGroupId?: string };

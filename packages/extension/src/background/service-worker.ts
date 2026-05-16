@@ -1,5 +1,7 @@
 import type { Message } from "../shared/messages";
 import { syncActionBadge } from "../shared/action-badge";
+import { parseAppExportBundle } from "../shared/app-bundle";
+import { normalizeRuleGroup } from "../shared/normalize-rule-group";
 import { processCapture, validateRuleGroup } from "../shared/pipeline";
 import {
   appendCapture,
@@ -147,6 +149,51 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
       }
       case "SAVE_APP_CONFIG": {
         await saveAppConfig(message.config);
+        await broadcastState(await getState());
+        sendResponse({ ok: true });
+        break;
+      }
+      case "IMPORT_APP_BUNDLE": {
+        const bundle = parseAppExportBundle(message.bundle);
+        if (!bundle) {
+          sendResponse({ ok: false, error: "Invalid bundle" });
+          break;
+        }
+        const state = await getState();
+        const { options } = message;
+
+        if (options.ruleGroups) {
+          for (const raw of bundle.ruleGroups) {
+            if (!validateRuleGroup(raw)) continue;
+            const group = normalizeRuleGroup(raw);
+            const idx = state.ruleGroups.findIndex((g) => g.id === group.id);
+            if (idx >= 0) {
+              if (options.overwriteRuleGroups) state.ruleGroups[idx] = group;
+            } else {
+              state.ruleGroups.push(group);
+            }
+          }
+          await saveRuleGroups(state.ruleGroups);
+          if (bundle.activeRuleGroupId) {
+            const exists = state.ruleGroups.some((g) => g.id === bundle.activeRuleGroupId);
+            if (exists) await saveActiveRuleGroupId(bundle.activeRuleGroupId);
+          }
+        }
+
+        if (options.processors || options.aliasMaps) {
+          const config = { ...state.config };
+          if (options.processors) {
+            config.customProcessors = {
+              ...config.customProcessors,
+              ...bundle.config.customProcessors,
+            };
+          }
+          if (options.aliasMaps) {
+            config.aliasMaps = { ...config.aliasMaps, ...bundle.config.aliasMaps };
+          }
+          await saveAppConfig(config);
+        }
+
         await broadcastState(await getState());
         sendResponse({ ok: true });
         break;

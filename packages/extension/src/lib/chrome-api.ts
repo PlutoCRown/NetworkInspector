@@ -21,11 +21,12 @@ export function openSidePanel(onDone?: () => void): void {
 
 export function openEditorTab(
   ruleGroupId?: string,
-  options?: { newGroup?: boolean; view?: "settings" },
+  options?: { newGroup?: boolean; view?: "processors" | "alias" | "about" | "settings" },
 ): void {
   const base = chrome.runtime.getURL("src/editor/index.html");
   let url = base;
-  if (options?.view === "settings") url = `${base}?view=settings`;
+  if (options?.view === "settings") url = `${base}?view=processors`;
+  else if (options?.view) url = `${base}?view=${options.view}`;
   else if (options?.newGroup) url = `${base}?new=1`;
   else if (ruleGroupId) url = `${base}?id=${encodeURIComponent(ruleGroupId)}`;
   void chrome.tabs.create({ url });

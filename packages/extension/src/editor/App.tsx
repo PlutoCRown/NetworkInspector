@@ -2,12 +2,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Download, Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ImportBundleDialog } from "@/components/ImportBundleDialog";
 import { useAppState, sendMessage } from "@/hooks/useAppState";
+import { useImportJson } from "@/hooks/useImportJson";
 import { createEmptyRule } from "@/shared/create-empty-rule";
 import { normalizeRuleGroup } from "@/shared/normalize-rule-group";
 import type { AppConfig, RuleGroup } from "@/shared/types";
-import { cn } from "@/lib/utils";
-import { GlobalConfigSection } from "./form/GlobalConfigSection";
+import { EditorSidebar, type EditorNavSection } from "./EditorSidebar";
+import { AboutSection } from "./form/AboutSection";
+import { AliasSection } from "./form/AliasSection";
+import { ProcessorSection } from "./form/ProcessorSection";
 import { RuleGroupForm } from "./RuleGroupForm";
 
 function emptyGroup(): RuleGroup {
@@ -22,21 +26,30 @@ function emptyGroup(): RuleGroup {
   });
 }
 
+function parseSectionParam(value: string | null): EditorNavSection {
+  if (value === "processors" || value === "alias" || value === "about") return value;
+  if (value === "settings") return "processors";
+  return "rule-groups";
+}
+
 export function EditorApp() {
   const { state, refresh } = useAppState();
   const [group, setGroup] = useState<RuleGroup | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [jsonMode, setJsonMode] = useState(false);
   const [jsonText, setJsonText] = useState("");
-  const [view, setView] = useState<"group" | "settings">("group");
+  const [section, setSection] = useState<EditorNavSection>("rule-groups");
   const [configDraft, setConfigDraft] = useState<AppConfig | null>(null);
   const initialized = useRef(false);
 
   const config = configDraft ?? state?.config;
 
+  const importJson = useImportJson(refresh);
+
   const selectGroup = useCallback(
     (id: string | "new") => {
       if (!state) return;
+      setSection("rule-groups");
       if (id === "new") {
         const next = emptyGroup();
         setGroup(next);
@@ -71,9 +84,7 @@ export function EditorApp() {
     const params = new URLSearchParams(window.location.search);
     const queryId = params.get("id");
     const isNew = params.get("new") === "1";
-    const openSettings = params.get("view") === "settings";
-
-    if (openSettings) setView("settings");
+    setSection(parseSectionParam(params.get("view")));
 
     if (isNew) {
       selectGroup("new");
@@ -94,6 +105,12 @@ export function EditorApp() {
     if (state?.config) setConfigDraft(state.config);
   }, [state?.config]);
 
+  useEffect(() => {
+    if (!state || section !== "rule-groups" || !selectedId) return;
+    const picked = state.ruleGroups.find((g) => g.id === selectedId);
+    if (picked) setGroup(normalizeRuleGroup(structuredClone(picked)));
+  }, [state, section, selectedId]);
+
   if (!group || !state || !config) {
     return <div className="p-6">加载中…</div>;
   }
@@ -101,7 +118,7 @@ export function EditorApp() {
   const saveConfig = async () => {
     await sendMessage({ type: "SAVE_APP_CONFIG", config });
     await refresh();
-    alert("全局配置已保存");
+    alert("已保存");
   };
 
   const save = async () => {
@@ -147,86 +164,65 @@ export function EditorApp() {
     }
   };
 
+  const headerTitle = {
+    "rule-groups": group.name,
+    processors: "Processor",
+    alias: "Alias",
+    about: "About",
+  }[section];
+
+  const headerDesc = {
+    "rule-groups": "编辑站点、捕获与字段提取",
+    processors: "内置与自定义 Processor",
+    alias: "全局 Alias 映射表",
+    about: "版本信息与数据导出",
+  }[section];
+
   return (
     <div className="flex h-screen overflow-hidden">
-      <aside className="flex h-full w-56 shrink-0 flex-col border-r bg-muted/30">
-        <div className="border-b px-3 py-3">
-          <p className="text-sm font-semibold">规则组</p>
-          <p className="text-[10px] text-muted-foreground">{state.ruleGroups.length} 个</p>
-        </div>
-        <nav className="flex-1 overflow-y-auto p-2">
-          <ul className="space-y-0.5">
-            {state.ruleGroups.map((g) => (
-              <li key={g.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setView("group");
-                    selectGroup(g.id);
-                  }}
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors",
-                    selectedId === g.id
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-accent",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "h-2 w-2 shrink-0 rounded-full",
-                      g.enabled ? "bg-green-500 dark:bg-green-400" : "bg-muted-foreground/40",
-                      selectedId === g.id && "ring-1 ring-primary-foreground/50",
-                    )}
-                  />
-                  <span className="truncate">{g.name}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        <div className="space-y-1 border-t p-2">
-          <Button
-            variant={view === "settings" ? "secondary" : "ghost"}
-            size="sm"
-            className="w-full justify-start"
-            onClick={() => setView("settings")}
-          >
-            全局配置
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full justify-start"
-            onClick={() => {
-              setView("group");
-              selectGroup("new");
-            }}
-          >
-            <Plus className="h-4 w-4" />
-            新建规则组
-          </Button>
-        </div>
-      </aside>
+      <EditorSidebar
+        section={section}
+        onSectionChange={setSection}
+        ruleGroups={state.ruleGroups}
+        selectedId={selectedId}
+        onSelectGroup={selectGroup}
+        onNewGroup={() => selectGroup("new")}
+        onImportJson={importJson.openFilePicker}
+      />
+
+      <input
+        ref={importJson.fileRef}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void importJson.handleFile(f);
+          e.target.value = "";
+        }}
+      />
+
+      {importJson.bundleDialog && (
+        <ImportBundleDialog
+          stats={importJson.bundleDialog}
+          onCancel={importJson.cancelBundleImport}
+          onConfirm={importJson.confirmBundleImport}
+        />
+      )}
 
       <main className="min-w-0 flex-1 overflow-y-auto p-6">
         <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold">
-              {view === "settings" ? "全局配置" : group.name}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {view === "settings"
-                ? "别名映射与自定义 Processor"
-                : "编辑站点、捕获与字段提取"}
-            </p>
+            <h1 className="text-2xl font-semibold">{headerTitle}</h1>
+            <p className="text-sm text-muted-foreground">{headerDesc}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {view === "settings" ? (
+            {section === "processors" || section === "alias" ? (
               <Button size="sm" onClick={saveConfig}>
                 <Save className="h-4 w-4" />
                 保存
               </Button>
-            ) : (
+            ) : section === "rule-groups" ? (
               <>
                 <Button variant="outline" size="sm" onClick={() => setJsonMode((v) => !v)}>
                   {jsonMode ? "表单" : "JSON"}
@@ -244,26 +240,28 @@ export function EditorApp() {
                   保存
                 </Button>
               </>
-            )}
+            ) : null}
           </div>
         </header>
 
-        {view === "settings" ? (
-          <div className="mx-auto max-w-2xl">
-            <GlobalConfigSection config={config} onChange={setConfigDraft} />
-          </div>
-        ) : jsonMode ? (
-          <div className="space-y-3">
-            <Textarea
-              className="min-h-[420px] font-mono text-xs"
-              value={jsonText || JSON.stringify(normalizeRuleGroup(group), null, 2)}
-              onChange={(e) => setJsonText(e.target.value)}
-            />
-            <Button onClick={loadJson}>应用 JSON</Button>
-          </div>
-        ) : (
-          <RuleGroupForm group={group} config={config} onChange={setGroup} />
+        {section === "processors" && (
+          <ProcessorSection config={config} onChange={setConfigDraft} />
         )}
+        {section === "alias" && <AliasSection config={config} onChange={setConfigDraft} />}
+        {section === "about" && <AboutSection state={state} />}
+        {section === "rule-groups" &&
+          (jsonMode ? (
+            <div className="space-y-3">
+              <Textarea
+                className="min-h-[420px] font-mono text-xs"
+                value={jsonText || JSON.stringify(normalizeRuleGroup(group), null, 2)}
+                onChange={(e) => setJsonText(e.target.value)}
+              />
+              <Button onClick={loadJson}>应用 JSON</Button>
+            </div>
+          ) : (
+            <RuleGroupForm group={group} config={config} onChange={setGroup} />
+          ))}
       </main>
     </div>
   );

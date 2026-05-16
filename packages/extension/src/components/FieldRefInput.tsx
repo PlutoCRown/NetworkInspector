@@ -84,6 +84,8 @@ export function FieldRefInput({
   const [highlightIdx, setHighlightIdx] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  /** 避免 onChange → 父组件回写 value 时用 parse 结果覆盖正在输入的 pathDraft */
+  const lastEmittedRef = useRef(value);
 
   const defaultPlaceholder =
     mode === "split-source"
@@ -91,9 +93,12 @@ export function FieldRefInput({
       : "路径或 /json、/aggregate/item、/processor/time";
 
   useEffect(() => {
+    if (value === lastEmittedRef.current) return;
+    lastEmittedRef.current = value;
     const next = parseFieldExpr(value);
     setExpr(next);
     setPathDraft(next.path);
+    setSlashActive(false);
   }, [value]);
 
   useEffect(() => {
@@ -107,11 +112,18 @@ export function FieldRefInput({
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
+  const emitSerialized = (next: FieldExpr) => {
+    const serialized = serializeFieldExpr(next);
+    lastEmittedRef.current = serialized;
+    onChange(serialized);
+    return serialized;
+  };
+
   const commit = (next: FieldExpr, draftOverride?: string) => {
     setExpr(next);
     const draft = draftOverride ?? next.path;
     setPathDraft(draft);
-    onChange(serializeFieldExpr(next));
+    emitSerialized(next);
   };
 
   const hasSource = Boolean(expr.source);
@@ -179,14 +191,25 @@ export function FieldRefInput({
     const seg = parseSlashSegment(path);
     const inSlash = seg !== null;
     setSlashActive(inSlash);
-    const storedPath = inSlash ? seg!.base : path;
-    commit({ ...expr, path: storedPath }, path);
+    const storedPath = inSlash ? seg.base : path;
+    const next = { ...expr, path: storedPath };
+    setExpr(next);
+    setPathDraft(path);
+    if (!inSlash) {
+      emitSerialized(next);
+    }
   };
 
   const finalizePath = () => {
     const seg = parseSlashSegment(pathDraft);
     if (seg) {
-      commit({ ...expr, path: pathDraft });
+      const next = { ...expr, path: seg.base };
+      setExpr(next);
+      setPathDraft(seg.base);
+      emitSerialized(next);
+    } else if (pathDraft !== expr.path) {
+      const next = { ...expr, path: pathDraft };
+      commit(next);
     }
     setSlashActive(false);
   };

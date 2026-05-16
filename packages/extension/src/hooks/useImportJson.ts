@@ -2,21 +2,37 @@ import { useRef, useState } from "react";
 import { sendMessage } from "@/hooks/useAppState";
 import {
   type AppBundleStats,
+  type AppExportBundle,
   type ImportBundleOptions,
   parseImportJson,
 } from "@/shared/app-bundle";
-import type { RuleGroup } from "@/shared/types";
+import {
+  formatImportWarnings,
+  getMissingFieldRefs,
+  hasImportWarnings,
+} from "@/shared/field-refs";
+import type { AppConfig, RuleGroup } from "@/shared/types";
 
-export function useImportJson(onDone?: () => void | Promise<void>) {
+export function useImportJson(
+  currentConfig: AppConfig,
+  onDone?: () => void | Promise<void>,
+) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [bundleDialog, setBundleDialog] = useState<AppBundleStats | null>(null);
-  const [pendingBundle, setPendingBundle] = useState<import("@/shared/app-bundle").AppExportBundle | null>(
-    null,
-  );
+  const [pendingBundle, setPendingBundle] = useState<AppExportBundle | null>(null);
 
   const openFilePicker = () => fileRef.current?.click();
 
+  const warnMissingRefs = (group: RuleGroup): boolean => {
+    const missing = getMissingFieldRefs([group], currentConfig);
+    if (!hasImportWarnings(missing)) return true;
+    return confirm(
+      `规则组引用了当前配置中不存在的 ID，相关功能可能无效：\n\n${formatImportWarnings(missing)}\n\n是否仍要导入？`,
+    );
+  };
+
   const importRuleGroup = async (group: RuleGroup) => {
+    if (!warnMissingRefs(group)) return;
     const res = await sendMessage<{ ok: boolean }>({
       type: "IMPORT_RULE_GROUP",
       group,
@@ -73,6 +89,7 @@ export function useImportJson(onDone?: () => void | Promise<void>) {
   return {
     fileRef,
     bundleDialog,
+    pendingBundle,
     openFilePicker,
     handleFile,
     confirmBundleImport,

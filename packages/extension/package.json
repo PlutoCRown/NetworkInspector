@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "bun test ./src/shared/pipeline.test.ts ./src/shared/field-expr.test.ts ./src/shared/field-resolve.test.ts ./src/shared/visible-captures.test.ts ./src/shared/app-bundle.test.ts"
+    "test": "bun test ./src/shared/pipeline.test.ts ./src/shared/field-expr.test.ts ./src/shared/field-resolve.test.ts ./src/shared/visible-captures.test.ts ./src/shared/app-bundle.test.ts ./src/shared/field-refs.test.ts"
   },
   "dependencies": {
     "@network-inspector/presets": "workspace:*",

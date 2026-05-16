@@ -1,3 +1,4 @@
+import { normalizeAppConfig } from "./normalize-app-config";
 import { normalizeRuleGroup } from "./normalize-rule-group";
 import { validateRuleGroup } from "./pipeline";
 import { APP_VERSION } from "./app-meta";
@@ -77,10 +78,10 @@ export function parseAppExportBundle(value: unknown): AppExportBundle | null {
     ruleGroups: value.ruleGroups
       .filter((g) => validateRuleGroup(g))
       .map((g) => normalizeRuleGroup(g)),
-    config: {
+    config: normalizeAppConfig({
       aliasMaps: { ...value.config.aliasMaps },
       customProcessors: { ...value.config.customProcessors },
-    },
+    }),
     activeRuleGroupId:
       typeof value.activeRuleGroupId === "string" ? value.activeRuleGroupId : null,
   };

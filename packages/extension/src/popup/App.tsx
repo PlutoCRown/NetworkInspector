@@ -16,12 +16,12 @@ import { useAppState, sendMessage } from "@/hooks/useAppState";
 import { useImportJson } from "@/hooks/useImportJson";
 import { openEditorTab, openSidePanel } from "@/lib/chrome-api";
 import { matchesAny } from "@/shared/regex";
-import type { RuleGroup } from "@/shared/types";
+import { DEFAULT_APP_CONFIG, type RuleGroup } from "@/shared/types";
 import { cn } from "@/lib/utils";
 
 export function PopupApp() {
   const { state, refresh } = useAppState();
-  const importJson = useImportJson(refresh);
+  const importJson = useImportJson(state?.config ?? DEFAULT_APP_CONFIG, refresh);
   const [tabUrl, setTabUrl] = useState<string | null>(null);
   const [groupsExpanded, setGroupsExpanded] = useState(false);
 
@@ -105,9 +105,11 @@ export function PopupApp() {
         设置
       </Button>
 
-      {importJson.bundleDialog && (
+      {importJson.bundleDialog && importJson.pendingBundle && state && (
         <ImportBundleDialog
           stats={importJson.bundleDialog}
+          bundle={importJson.pendingBundle}
+          currentConfig={state.config}
           onCancel={importJson.cancelBundleImport}
           onConfirm={importJson.confirmBundleImport}
         />

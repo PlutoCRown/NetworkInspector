@@ -8,6 +8,7 @@ import { useImportJson } from "@/hooks/useImportJson";
 import { createEmptyRule } from "@/shared/create-empty-rule";
 import { normalizeRuleGroup } from "@/shared/normalize-rule-group";
 import type { AppConfig, RuleGroup } from "@/shared/types";
+import { DEFAULT_APP_CONFIG } from "@/shared/types";
 import { EditorSidebar, type EditorNavSection } from "./EditorSidebar";
 import { AboutSection } from "./form/AboutSection";
 import { AliasSection } from "./form/AliasSection";
@@ -44,7 +45,7 @@ export function EditorApp() {
 
   const config = configDraft ?? state?.config;
 
-  const importJson = useImportJson(refresh);
+  const importJson = useImportJson(config ?? DEFAULT_APP_CONFIG, refresh);
 
   const selectGroup = useCallback(
     (id: string | "new") => {
@@ -172,7 +173,7 @@ export function EditorApp() {
   }[section];
 
   const headerDesc = {
-    "rule-groups": "编辑站点、捕获与字段提取",
+    "rule-groups": "规则组编辑",
     processors: "内置与自定义 Processor",
     alias: "全局 Alias 映射表",
     about: "版本信息与数据导出",
@@ -202,9 +203,11 @@ export function EditorApp() {
         }}
       />
 
-      {importJson.bundleDialog && (
+      {importJson.bundleDialog && importJson.pendingBundle && config && (
         <ImportBundleDialog
           stats={importJson.bundleDialog}
+          bundle={importJson.pendingBundle}
+          currentConfig={config}
           onCancel={importJson.cancelBundleImport}
           onConfirm={importJson.confirmBundleImport}
         />
@@ -248,7 +251,7 @@ export function EditorApp() {
           <ProcessorSection config={config} onChange={setConfigDraft} />
         )}
         {section === "alias" && <AliasSection config={config} onChange={setConfigDraft} />}
-        {section === "about" && <AboutSection state={state} />}
+        {section === "about" && <AboutSection state={state} importJson={importJson} />}
         {section === "rule-groups" &&
           (jsonMode ? (
             <div className="space-y-3">

@@ -1,14 +1,16 @@
-import { Download } from "lucide-react";
+import { Download, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { APP_NAME, APP_VERSION } from "@/shared/app-meta";
 import { buildAppExport } from "@/shared/app-bundle";
+import type { useImportJson } from "@/hooks/useImportJson";
 import type { AppState } from "@/shared/types";
 
 interface AboutSectionProps {
   state: AppState;
+  importJson: ReturnType<typeof useImportJson>;
 }
 
-export function AboutSection({ state }: AboutSectionProps) {
+export function AboutSection({ state, importJson }: AboutSectionProps) {
   const exportAll = () => {
     const bundle = buildAppExport(state);
     const blob = new Blob([JSON.stringify(bundle, null, 2)], {
@@ -50,15 +52,23 @@ export function AboutSection({ state }: AboutSectionProps) {
         </div>
       </dl>
 
-      <div className="rounded-lg border p-4">
-        <h3 className="text-sm font-medium">导出全部数据</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          导出包含所有规则组、Processor 与 Alias 的 JSON，可用于备份或迁移。
-        </p>
-        <Button className="mt-3" variant="outline" onClick={exportAll}>
-          <Download className="h-4 w-4" />
-          导出全部配置
-        </Button>
+      <div className="rounded-lg border p-4 space-y-3">
+        <div>
+          <h3 className="text-sm font-medium">备份与迁移</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            导出或导入包含规则组、Processor、Alias 的全量 JSON；导入时可勾选需要的内容。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={exportAll}>
+            <Download className="h-4 w-4" />
+            导出全部配置
+          </Button>
+          <Button variant="outline" onClick={importJson.openFilePicker}>
+            <FileUp className="h-4 w-4" />
+            导入全部配置
+          </Button>
+        </div>
       </div>
     </section>
   );

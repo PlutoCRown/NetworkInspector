@@ -1,18 +1,43 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import type { AppBundleStats, ImportBundleOptions } from "@/shared/app-bundle";
+import type { AppExportBundle, AppBundleStats, ImportBundleOptions } from "@/shared/app-bundle";
+import {
+  configAvailableAfterImport,
+  formatImportWarnings,
+  getMissingFieldRefs,
+  hasImportWarnings,
+} from "@/shared/field-refs";
+import type { AppConfig } from "@/shared/types";
 
 interface ImportBundleDialogProps {
   stats: AppBundleStats;
+  bundle: AppExportBundle;
+  currentConfig: AppConfig;
   onCancel: () => void;
   onConfirm: (options: ImportBundleOptions) => void;
 }
 
-export function ImportBundleDialog({ stats, onCancel, onConfirm }: ImportBundleDialogProps) {
+export function ImportBundleDialog({
+  stats,
+  bundle,
+  currentConfig,
+  onCancel,
+  onConfirm,
+}: ImportBundleDialogProps) {
   const [ruleGroups, setRuleGroups] = useState(stats.ruleGroupCount > 0);
   const [processors, setProcessors] = useState(stats.processorCount > 0);
   const [aliasMaps, setAliasMaps] = useState(stats.aliasMapCount > 0);
   const [overwriteRuleGroups, setOverwriteRuleGroups] = useState(true);
+
+  const warnings = useMemo(() => {
+    if (!ruleGroups || stats.ruleGroupCount === 0) return null;
+    const available = configAvailableAfterImport(currentConfig, bundle.config, {
+      processors,
+      aliasMaps,
+    });
+    const missing = getMissingFieldRefs(bundle.ruleGroups, available);
+    return hasImportWarnings(missing) ? missing : null;
+  }, [ruleGroups, processors, aliasMaps, stats.ruleGroupCount, bundle, currentConfig]);
 
   const canConfirm =
     (ruleGroups && stats.ruleGroupCount > 0) ||
@@ -91,6 +116,18 @@ export function ImportBundleDialog({ stats, onCancel, onConfirm }: ImportBundleD
             </li>
           )}
         </ul>
+
+        {warnings && (
+          <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+            <p className="font-medium">引用缺失警告</p>
+            <p className="mt-1 whitespace-pre-wrap">
+              规则组引用了以下 ID，但按当前勾选导入后仍不存在，相关功能可能无效：
+            </p>
+            <pre className="mt-1 font-mono text-[11px]">{formatImportWarnings(warnings)}</pre>
+            <p className="mt-1">请勾选导入对应 Processor / Alias，或稍后在设置中补全。</p>
+          </div>
+        )}
+
         <div className="mt-4 flex justify-end gap-2">
           <Button type="button" variant="outline" size="sm" onClick={onCancel}>
             取消

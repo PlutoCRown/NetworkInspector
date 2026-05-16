@@ -166,7 +166,10 @@ export function FieldRefInput({
       description: "自定义",
     })),
   ];
-  const aliasOptions = Object.keys(config.aliasMaps);
+  const aliasOptions = Object.entries(config.aliasMaps).map(([mapkey, group]) => ({
+    mapkey,
+    label: group.name ? `${group.name} (${mapkey})` : mapkey,
+  }));
 
   return (
     <div
@@ -176,11 +179,11 @@ export function FieldRefInput({
         className,
       )}
     >
-      {hasItemScope && <Tag label="Aggregate" tone="aggregate" />}
-      {hasSource && <Tag label={expr.source!} tone="source" />}
+      {hasItemScope && <Tag label="scope:item" tone="aggregate" />}
+      {hasSource && <Tag label={`source:${expr.source}`} tone="source" />}
       {isLiteral && pathDraft && <Tag label="固定文本" tone="default" />}
       {expr.aggregate && mode === "aggregate-source" && (
-        <Tag label="Aggregate" tone="aggregate" />
+        <Tag label="aggregate" tone="aggregate" />
       )}
 
       <input
@@ -192,9 +195,9 @@ export function FieldRefInput({
       />
 
       {expr.processors.map((p) => (
-        <Tag key={p} label={`Processor:${p}`} tone="processor" />
+        <Tag key={p} label={`processor:${p}`} tone="processor" />
       ))}
-      {expr.aliasMap && <Tag label={`Alias:${expr.aliasMap}`} tone="alias" />}
+      {expr.aliasMap && <Tag label={`alias:${expr.aliasMap}`} tone="alias" />}
 
       <div className="relative">
         <Button
@@ -290,17 +293,17 @@ export function FieldRefInput({
                 </button>
               </li>
             ))}
-            {aliasOptions.map((id) => (
-              <li key={id}>
+            {aliasOptions.map(({ mapkey, label }) => (
+              <li key={mapkey}>
                 <button
                   type="button"
                   className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
                   onMouseDown={(e) => {
                     e.preventDefault();
-                    addAlias(id);
+                    addAlias(mapkey);
                   }}
                 >
-                  Alias: {id}
+                  [alias:{mapkey}] {label !== mapkey ? `· ${label}` : ""}
                 </button>
               </li>
             ))}

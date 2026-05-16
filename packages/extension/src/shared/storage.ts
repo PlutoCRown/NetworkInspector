@@ -1,4 +1,5 @@
 import { DEFAULT_RULE_GROUPS } from "@network-inspector/presets";
+import { normalizeAppConfig } from "./normalize-app-config";
 import { normalizeRuleGroup } from "./normalize-rule-group";
 import {
   DEFAULT_APP_CONFIG,
@@ -33,10 +34,10 @@ export async function loadState(): Promise<AppState> {
   const captureEnabled =
     (result[STORAGE_KEYS.captureEnabled] as boolean | undefined) ?? true;
 
-  const config = {
+  const config = normalizeAppConfig({
     ...DEFAULT_APP_CONFIG,
     ...((result[STORAGE_KEYS.config] as AppConfig | undefined) ?? {}),
-  };
+  });
 
   return {
     ruleGroups: ruleGroups.map((g) => normalizeRuleGroup(g)),

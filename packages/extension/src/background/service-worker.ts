@@ -1,6 +1,7 @@
 import type { Message } from "../shared/messages";
 import { syncActionBadge } from "../shared/action-badge";
 import { parseAppExportBundle } from "../shared/app-bundle";
+import { normalizeAppConfig } from "../shared/normalize-app-config";
 import { normalizeRuleGroup } from "../shared/normalize-rule-group";
 import { processCapture, validateRuleGroup } from "../shared/pipeline";
 import {
@@ -148,7 +149,7 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
         break;
       }
       case "SAVE_APP_CONFIG": {
-        await saveAppConfig(message.config);
+        await saveAppConfig(normalizeAppConfig(message.config));
         await broadcastState(await getState());
         sendResponse({ ok: true });
         break;
@@ -191,7 +192,7 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
           if (options.aliasMaps) {
             config.aliasMaps = { ...config.aliasMaps, ...bundle.config.aliasMaps };
           }
-          await saveAppConfig(config);
+          await saveAppConfig(normalizeAppConfig(config));
         }
 
         await broadcastState(await getState());

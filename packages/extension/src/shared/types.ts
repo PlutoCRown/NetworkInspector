@@ -31,8 +31,15 @@ export interface RawRequestPayload {
   responseBody?: string | null;
 }
 
-/** 全局别名表：mapId → { 原始值: 展示值 } */
-export type AliasMapConfig = Record<string, Record<string, string>>;
+/** 单组 Alias：mapkey 为字段表达式 [alias:mapkey] 的引用 id */
+export interface AliasMapGroup {
+  /** 展示用组名 */
+  name: string;
+  mappings: Record<string, string>;
+}
+
+/** mapkey → Alias 组 */
+export type AliasMapConfig = Record<string, AliasMapGroup>;
 
 /** 自定义 Processor：id → JS 函数体 `(value) => ...` */
 export type CustomProcessorConfig = Record<string, string>;

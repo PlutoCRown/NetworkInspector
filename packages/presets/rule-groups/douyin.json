@@ -15,10 +15,10 @@
       "url": "mcs.zijieapi.com/list",
       "renderer": "card",
       "aggregate": true,
-      "aggregateFrom": "json:0.events|aggregate",
+      "aggregateFrom": "[source:json]0.events[aggregate]",
       "fields": {
-        "title": "item:event",
-        "popover": "item:params"
+        "title": "[scope:item]event",
+        "popover": "[scope:item]params"
       }
     }
   ]

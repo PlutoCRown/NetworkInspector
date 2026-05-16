@@ -88,10 +88,10 @@ describe("processCapture", () => {
           id: "batch",
           url: "/v1/batch",
           renderer: "card",
-          aggregateFrom: "json:items|aggregate",
+          aggregateFrom: "[source:json]items[aggregate]",
           fields: {
-            title: "item:name",
-            popover: "json:meta.source",
+            title: "[scope:item]name",
+            popover: "[source:json]meta.source",
           },
         },
       ],
@@ -124,10 +124,10 @@ describe("processCapture", () => {
           id: "batch",
           url: "/v1/batch",
           renderer: "card",
-          aggregateFrom: "json:|aggregate",
+          aggregateFrom: "[source:json][aggregate]",
           fields: {
-            title: "item:event",
-            desc: "item:time|processor:time",
+            title: "[scope:item]event",
+            desc: "[scope:item]time[processor:time]",
           },
         },
       ],
@@ -156,7 +156,7 @@ describe("processCapture", () => {
           url: "/v1/batch",
           renderer: "card",
           aggregateFrom: "json:|aggregate",
-          fields: { title: "item:event|alias:ev" },
+          fields: { title: "[scope:item]event[alias:ev]" },
         },
       ],
     };
@@ -168,7 +168,10 @@ describe("processCapture", () => {
         tabUrl: "https://app.acme.io/",
         responseBody: JSON.stringify([{ event: "page_view" }]),
       },
-      { ...CFG, aliasMaps: { ev: { page_view: "页面浏览" } } },
+      {
+        ...CFG,
+        aliasMaps: { ev: { name: "事件", mappings: { page_view: "页面浏览" } } },
+      },
     );
     const list = results as CaptureRecord[];
     expect(list[0]?.data.title).toBe("页面浏览");

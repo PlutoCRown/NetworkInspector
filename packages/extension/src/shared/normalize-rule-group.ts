@@ -1,4 +1,9 @@
-import { hasAggregateSource, parseFieldExpr, serializeFieldExpr } from "./field-expr";
+import {
+  hasAggregateSource,
+  migrateFieldExprString,
+  parseFieldExpr,
+  serializeFieldExpr,
+} from "./field-expr";
 import { createEmptyRule } from "./create-empty-rule";
 import { resolveRendererId } from "./renderer-registry";
 import type { Rule, RuleGroup } from "./types";
@@ -17,13 +22,22 @@ function migrateAggregateFrom(rule: Rule): Rule {
 function migrateFieldRefs(rule: Rule): Rule {
   const fields: Record<string, string> = {};
   for (const [k, v] of Object.entries(rule.fields)) {
+    let next = v;
     if (v.startsWith("aggregate:")) {
-      fields[k] = `item:${v.slice("aggregate:".length)}`;
+      next = serializeFieldExpr({
+        ...parseFieldExpr(`item:${v.slice("aggregate:".length)}`),
+        scope: "item",
+      });
     } else {
-      fields[k] = v;
+      next = migrateFieldExprString(v);
     }
+    fields[k] = next;
   }
-  return { ...rule, fields };
+  let aggregateFrom = rule.aggregateFrom;
+  if (aggregateFrom) {
+    aggregateFrom = migrateFieldExprString(aggregateFrom);
+  }
+  return { ...rule, fields, aggregateFrom };
 }
 
 /** 保证 capture 与 rules 一一对应，并同步 url */

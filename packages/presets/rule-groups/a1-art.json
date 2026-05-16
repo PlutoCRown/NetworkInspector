@@ -15,10 +15,10 @@
       "url": "data\\.a1\\.art",
       "renderer": "card",
       "aggregate": true,
-      "aggregateFrom": "json:|aggregate",
+      "aggregateFrom": "[source:json][aggregate]",
       "fields": {
-        "title": "item:action",
-        "popover": "item:properties"
+        "title": "[scope:item]action",
+        "popover": "[scope:item]properties"
       }
     }
   ]

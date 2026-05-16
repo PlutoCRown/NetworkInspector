@@ -80,8 +80,8 @@ export function runProcessor(value: unknown, id: string, config: AppConfig): unk
 
 export function applyAliasMap(value: unknown, mapId: string | null, config: AppConfig): unknown {
   if (!mapId || value == null) return value;
-  const map = config.aliasMaps[mapId];
-  if (!map) return value;
+  const group = config.aliasMaps[mapId];
+  if (!group) return value;
   const key = String(value);
-  return map[key] ?? value;
+  return group.mappings[key] ?? value;
 }

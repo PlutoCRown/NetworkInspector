@@ -22,7 +22,7 @@ describe("app-bundle", () => {
       config: {
         ...DEFAULT_APP_CONFIG,
         customProcessors: { fn1: "(v) => v" },
-        aliasMaps: { ev: { a: "b" } },
+        aliasMaps: { ev: { name: "事件", mappings: { a: "b" } } },
       },
     });
     const detected = detectImportPayload(bundle);

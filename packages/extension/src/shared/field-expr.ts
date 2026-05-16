@@ -19,6 +19,12 @@ export interface FieldExprTagOption {
   kind: "source" | "aggregate" | "processor" | "alias";
 }
 
+const TAG_RE = /\[([^\]]+)\]/g;
+
+function bracketTag(kind: string, value?: string): string {
+  return value !== undefined && value !== "" ? `[${kind}:${value}]` : `[${kind}]`;
+}
+
 export function emptyFieldExpr(scope: FieldScope = "request"): FieldExpr {
   return {
     scope,
@@ -30,34 +36,55 @@ export function emptyFieldExpr(scope: FieldScope = "request"): FieldExpr {
   };
 }
 
-function parseLegacyFieldRef(trimmed: string): FieldExpr | null {
-  if (trimmed.includes("|")) return null;
-  const idx = trimmed.indexOf(":");
-  if (idx === -1) {
-    const expr = emptyFieldExpr();
-    expr.path = trimmed;
-    return expr;
+function applyTag(expr: FieldExpr, kind: string, value: string) {
+  switch (kind) {
+    case "source":
+      if (SOURCES.includes(value as FieldSource)) {
+        expr.source = value as FieldSource;
+        expr.scope = "request";
+      }
+      break;
+    case "scope":
+      if (value === "item") expr.scope = "item";
+      break;
+    case "aggregate":
+      expr.aggregate = true;
+      break;
+    case "processor":
+      if (value) expr.processors.push(value);
+      break;
+    case "alias":
+      if (value) expr.aliasMap = value;
+      break;
+    default:
+      break;
   }
-  const head = trimmed.slice(0, idx);
-  const path = trimmed.slice(idx + 1);
-  if (head === "aggregate" || head === "item") {
-    return { ...emptyFieldExpr("item"), path };
-  }
-  if (SOURCES.includes(head as FieldSource)) {
-    return { ...emptyFieldExpr("request"), source: head as FieldSource, path };
-  }
-  // 未知前缀视为固定文本（如含冒号的字面量）
-  return { ...emptyFieldExpr(), path: trimmed };
 }
 
-/** 从旧格式迁移；序列化格式：`json:path|aggregate|processor:time|alias:mapId` */
-export function parseFieldExpr(raw: string): FieldExpr {
-  const trimmed = raw.trim();
-  if (!trimmed) return emptyFieldExpr();
+function parseBracketFormat(trimmed: string): FieldExpr {
+  const expr = emptyFieldExpr();
+  const pathParts: string[] = [];
+  let lastIndex = 0;
 
-  const legacy = parseLegacyFieldRef(trimmed);
-  if (legacy) return legacy;
+  for (const m of trimmed.matchAll(TAG_RE)) {
+    const before = trimmed.slice(lastIndex, m.index);
+    if (before) pathParts.push(before);
+    lastIndex = m.index! + m[0].length;
 
+    const inner = m[1]!;
+    const ci = inner.indexOf(":");
+    const kind = ci === -1 ? inner : inner.slice(0, ci);
+    const val = ci === -1 ? "" : inner.slice(ci + 1);
+    applyTag(expr, kind, val);
+  }
+
+  const tail = trimmed.slice(lastIndex);
+  if (tail) pathParts.push(tail);
+  expr.path = pathParts.join("");
+  return expr;
+}
+
+function parsePipeFormat(trimmed: string): FieldExpr {
   const parts = trimmed.split("|").map((p) => p.trim()).filter(Boolean);
   const expr = emptyFieldExpr();
 
@@ -104,29 +131,74 @@ export function parseFieldExpr(raw: string): FieldExpr {
     if (!expr.path) expr.path = part;
   }
 
-  if (expr.scope === "item" && !expr.path && parts.length === 1 && !parts[0]!.includes(":")) {
-    expr.path = parts[0]!;
-  }
-
   return expr;
 }
 
-export function serializeFieldExpr(expr: FieldExpr): string {
-  const parts: string[] = [];
+function parseLegacyColonFormat(trimmed: string): FieldExpr | null {
+  if (trimmed.includes("|") || trimmed.includes("[")) return null;
+  const idx = trimmed.indexOf(":");
+  if (idx === -1) {
+    const expr = emptyFieldExpr();
+    expr.path = trimmed;
+    return expr;
+  }
+  const head = trimmed.slice(0, idx);
+  const path = trimmed.slice(idx + 1);
+  if (head === "aggregate" || head === "item") {
+    return { ...emptyFieldExpr("item"), path };
+  }
+  if (SOURCES.includes(head as FieldSource)) {
+    return { ...emptyFieldExpr("request"), source: head as FieldSource, path };
+  }
+  return { ...emptyFieldExpr(), path: trimmed };
+}
 
-  if (expr.scope === "item") {
-    parts.push(expr.path ? `item:${expr.path}` : "item");
-  } else if (expr.source) {
-    parts.push(`${expr.source}:${expr.path}`);
-  } else if (expr.path) {
-    parts.push(expr.path);
+/**
+ * 存储格式：[source:json]action[processor:time][alias:mapkey]
+ * 兼容旧 pipe / source:path 写法，序列化一律输出方括号格式。
+ */
+export function parseFieldExpr(raw: string): FieldExpr {
+  const trimmed = raw.trim();
+  if (!trimmed) return emptyFieldExpr();
+
+  if (trimmed.includes("[")) return parseBracketFormat(trimmed);
+  if (trimmed.includes("|")) return parsePipeFormat(trimmed);
+
+  const legacy = parseLegacyColonFormat(trimmed);
+  if (legacy) return legacy;
+
+  return emptyFieldExpr();
+}
+
+export function serializeFieldExpr(expr: FieldExpr): string {
+  if (
+    !expr.source &&
+    expr.scope !== "item" &&
+    !expr.aggregate &&
+    expr.processors.length === 0 &&
+    !expr.aliasMap
+  ) {
+    return expr.path;
   }
 
-  if (expr.aggregate) parts.push("aggregate");
-  for (const p of expr.processors) parts.push(`processor:${p}`);
-  if (expr.aliasMap) parts.push(`alias:${expr.aliasMap}`);
+  let out = "";
+  if (expr.scope === "item") {
+    out += bracketTag("scope", "item");
+  } else if (expr.source) {
+    out += bracketTag("source", expr.source);
+  }
+  out += expr.path;
+  if (expr.aggregate) out += bracketTag("aggregate");
+  for (const p of expr.processors) out += bracketTag("processor", p);
+  if (expr.aliasMap) out += bracketTag("alias", expr.aliasMap);
+  return out;
+}
 
-  return parts.join("|");
+/** 将旧格式字段迁移为方括号存储 */
+export function migrateFieldExprString(raw: string | undefined): string {
+  if (!raw?.trim()) return raw ?? "";
+  if (raw.includes("[")) return raw;
+  return serializeFieldExpr(parseFieldExpr(raw));
 }
 
 export function isAggregateSourceExpr(expr: FieldExpr): boolean {
@@ -145,12 +217,5 @@ export const SOURCE_TAG_OPTIONS: FieldExprTagOption[] = SOURCES.map((id) => ({
 }));
 
 export function formatFieldExprLabel(expr: FieldExpr): string {
-  const tags: string[] = [];
-  if (expr.scope === "item") tags.push("Aggregate");
-  else if (expr.source) tags.push(expr.source);
-  if (expr.path) tags.push(expr.path);
-  for (const p of expr.processors) tags.push(`Processor:${p}`);
-  if (expr.aliasMap) tags.push(`Alias:${expr.aliasMap}`);
-  if (expr.aggregate && expr.scope === "request") tags.push("Aggregate");
-  return tags.join(" ");
+  return serializeFieldExpr(expr);
 }

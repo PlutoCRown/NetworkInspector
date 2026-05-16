@@ -57,7 +57,7 @@ export function AboutSection({ state }: AboutSectionProps) {
         </p>
         <Button className="mt-3" variant="outline" onClick={exportAll}>
           <Download className="h-4 w-4" />
-          导出全量 JSON
+          导出全部配置
         </Button>
       </div>
     </section>

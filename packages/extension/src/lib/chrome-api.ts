@@ -19,10 +19,14 @@ export function openSidePanel(onDone?: () => void): void {
   });
 }
 
-export function openEditorTab(ruleGroupId?: string, options?: { newGroup?: boolean }): void {
+export function openEditorTab(
+  ruleGroupId?: string,
+  options?: { newGroup?: boolean; view?: "settings" },
+): void {
   const base = chrome.runtime.getURL("src/editor/index.html");
   let url = base;
-  if (options?.newGroup) url = `${base}?new=1`;
+  if (options?.view === "settings") url = `${base}?view=settings`;
+  else if (options?.newGroup) url = `${base}?new=1`;
   else if (ruleGroupId) url = `${base}?id=${encodeURIComponent(ruleGroupId)}`;
   void chrome.tabs.create({ url });
 }

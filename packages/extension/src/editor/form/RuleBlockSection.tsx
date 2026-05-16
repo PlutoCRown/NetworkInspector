@@ -67,7 +67,7 @@ export function RuleBlockSection({
       <div className="space-y-1.5 rounded-md bg-muted/40 p-3">
         <Label>聚合数据源</Label>
         <p className="text-[10px] text-muted-foreground">
-          先选来源（json 等），再填路径，用 + 添加 Aggregate 标签打散数组
+          用 + 选择 json / response 等来源并填路径，再添加 Aggregate 标签打散数组
         </p>
         <FieldRefInput
           mode="aggregate-source"

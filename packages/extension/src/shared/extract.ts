@@ -66,6 +66,13 @@ export function extractField(
       if (json == null) return null;
       return path ? getByPath(json, path) : json;
     }
+    case "response": {
+      const json = parseJsonBody(input.responseBody);
+      if (json == null) {
+        return path ? null : (input.responseBody ?? null);
+      }
+      return path ? getByPath(json, path) : json;
+    }
     case "form-data": {
       const form = parseFormBody(input.requestBody);
       return path ? form[path] ?? null : form;

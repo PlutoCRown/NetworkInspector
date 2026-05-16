@@ -71,6 +71,9 @@ export function EditorApp() {
     const params = new URLSearchParams(window.location.search);
     const queryId = params.get("id");
     const isNew = params.get("new") === "1";
+    const openSettings = params.get("view") === "settings";
+
+    if (openSettings) setView("settings");
 
     if (isNew) {
       selectGroup("new");
@@ -145,8 +148,8 @@ export function EditorApp() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-56 shrink-0 flex-col border-r bg-muted/30">
+    <div className="flex h-screen overflow-hidden">
+      <aside className="flex h-full w-56 shrink-0 flex-col border-r bg-muted/30">
         <div className="border-b px-3 py-3">
           <p className="text-sm font-semibold">规则组</p>
           <p className="text-[10px] text-muted-foreground">{state.ruleGroups.length} 个</p>

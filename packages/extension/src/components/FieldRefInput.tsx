@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Plus, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   emptyFieldExpr,
@@ -29,11 +28,9 @@ interface FieldRefInputProps {
 function Tag({
   label,
   tone = "default",
-  onRemove,
 }: {
   label: string;
   tone?: "default" | "source" | "aggregate" | "processor" | "alias";
-  onRemove?: () => void;
 }) {
   const toneClass = {
     default: "bg-muted text-foreground",
@@ -46,16 +43,11 @@ function Tag({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium",
         toneClass,
       )}
     >
       {label}
-      {onRemove && (
-        <button type="button" className="rounded hover:bg-black/10" onClick={onRemove}>
-          <X className="h-3 w-3" />
-        </button>
-      )}
     </span>
   );
 }
@@ -66,14 +58,18 @@ export function FieldRefInput({
   mode,
   ruleHasAggregate = false,
   config,
-  placeholder = "路径",
+  placeholder,
   className,
 }: FieldRefInputProps) {
   const [expr, setExpr] = useState<FieldExpr>(() => parseFieldExpr(value));
   const [pathDraft, setPathDraft] = useState(expr.path);
-  const [sourceOpen, setSourceOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  const defaultPlaceholder =
+    mode === "aggregate-source"
+      ? "路径（如 data），+ 选择 json / response 等来源"
+      : "固定文本或路径，+ 选择来源";
 
   useEffect(() => {
     const next = parseFieldExpr(value);
@@ -84,7 +80,6 @@ export function FieldRefInput({
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       if (!wrapRef.current?.contains(e.target as Node)) {
-        setSourceOpen(false);
         setAddOpen(false);
       }
     };
@@ -99,9 +94,8 @@ export function FieldRefInput({
   };
 
   const pickSource = (source: FieldSource) => {
-    const next = { ...expr, source, scope: "request" as const };
-    commit(next);
-    setSourceOpen(false);
+    commit({ ...expr, source, scope: "request" as const });
+    setAddOpen(false);
   };
 
   const setPath = (path: string) => {
@@ -120,6 +114,7 @@ export function FieldRefInput({
       source: null,
       aggregate: false,
     });
+    setAddOpen(false);
   };
 
   const addProcessor = (id: string) => {
@@ -136,57 +131,32 @@ export function FieldRefInput({
   const showItemScope = mode === "field" && ruleHasAggregate;
   const hasSource = Boolean(expr.source);
   const hasItemScope = expr.scope === "item";
-  const needsPicker = !hasSource && !hasItemScope;
+  const isLiteral = !hasSource && !hasItemScope;
 
-  if (needsPicker) {
-    return (
-      <div ref={wrapRef} className={cn("relative", className)}>
-        <Input
-          className="bg-background font-mono text-xs"
-          placeholder={
-            mode === "aggregate-source"
-              ? "选择来源：json / query / form-data / header"
-              : "选择 Aggregate 或请求来源"
-          }
-          onFocus={() => setSourceOpen(true)}
-          readOnly
-        />
-        {sourceOpen && (
-          <ul className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-md border bg-popover py-1 shadow-md">
-            {showItemScope && (
-              <li>
-                <button
-                  type="button"
-                  className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setItemScope();
-                    setSourceOpen(false);
-                  }}
-                >
-                  Aggregate（数组项内路径）
-                </button>
-              </li>
-            )}
-            {SOURCE_TAG_OPTIONS.map((s) => (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    pickSource(s.id as FieldSource);
-                  }}
-                >
-                  {s.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    );
-  }
+  const removeLastTag = () => {
+    if (expr.aliasMap) {
+      commit({ ...expr, aliasMap: null });
+      return;
+    }
+    if (expr.processors.length > 0) {
+      commit({ ...expr, processors: expr.processors.slice(0, -1) });
+      return;
+    }
+    if (expr.aggregate && mode === "aggregate-source") {
+      commit({ ...expr, aggregate: false });
+      return;
+    }
+    if (hasItemScope || hasSource) {
+      commit(emptyFieldExpr("request"));
+    }
+  };
+
+  const handlePathKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Backspace" && e.key !== "Delete") return;
+    if (pathDraft.length > 0) return;
+    e.preventDefault();
+    removeLastTag();
+  };
 
   const processorOptions = [
     ...BUILTIN_PROCESSORS,
@@ -206,44 +176,25 @@ export function FieldRefInput({
         className,
       )}
     >
-      {hasItemScope && (
-        <Tag label="Aggregate" tone="aggregate" onRemove={() => commit(emptyFieldExpr("request"))} />
-      )}
-      {hasSource && (
-        <Tag
-          label={expr.source!}
-          tone="source"
-          onRemove={() => commit({ ...expr, source: null })}
-        />
-      )}
+      {hasItemScope && <Tag label="Aggregate" tone="aggregate" />}
+      {hasSource && <Tag label={expr.source!} tone="source" />}
+      {isLiteral && pathDraft && <Tag label="固定文本" tone="default" />}
       {expr.aggregate && mode === "aggregate-source" && (
-        <Tag label="Aggregate" tone="aggregate" onRemove={toggleAggregateTag} />
+        <Tag label="Aggregate" tone="aggregate" />
       )}
 
       <input
         className="min-w-[80px] flex-1 bg-transparent py-0.5 text-xs font-mono outline-none placeholder:text-muted-foreground"
         value={pathDraft}
-        placeholder={placeholder}
+        placeholder={placeholder ?? defaultPlaceholder}
         onChange={(e) => setPath(e.target.value)}
+        onKeyDown={handlePathKeyDown}
       />
 
       {expr.processors.map((p) => (
-        <Tag
-          key={p}
-          label={`Processor:${p}`}
-          tone="processor"
-          onRemove={() =>
-            commit({ ...expr, processors: expr.processors.filter((x) => x !== p) })
-          }
-        />
+        <Tag key={p} label={`Processor:${p}`} tone="processor" />
       ))}
-      {expr.aliasMap && (
-        <Tag
-          label={`Alias:${expr.aliasMap}`}
-          tone="alias"
-          onRemove={() => commit({ ...expr, aliasMap: null })}
-        />
-      )}
+      {expr.aliasMap && <Tag label={`Alias:${expr.aliasMap}`} tone="alias" />}
 
       <div className="relative">
         <Button
@@ -256,8 +207,43 @@ export function FieldRefInput({
           <Plus className="h-3.5 w-3.5" />
         </Button>
         {addOpen && (
-          <ul className="absolute right-0 z-50 mt-1 max-h-48 w-44 overflow-auto rounded-md border bg-popover py-1 shadow-md">
-            {mode === "aggregate-source" && !expr.aggregate && (
+          <ul className="absolute right-0 z-50 mt-1 max-h-56 w-48 overflow-auto rounded-md border bg-popover py-1 shadow-md">
+            {!hasSource && !hasItemScope && (
+              <>
+                <li className="px-3 py-1 text-[10px] font-medium text-muted-foreground">
+                  数据来源
+                </li>
+                {SOURCE_TAG_OPTIONS.map((s) => (
+                  <li key={s.id}>
+                    <button
+                      type="button"
+                      className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        pickSource(s.id as FieldSource);
+                      }}
+                    >
+                      {s.label}
+                    </button>
+                  </li>
+                ))}
+              </>
+            )}
+            {showItemScope && !hasItemScope && (
+              <li>
+                <button
+                  type="button"
+                  className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setItemScope();
+                  }}
+                >
+                  Aggregate（数组项内路径）
+                </button>
+              </li>
+            )}
+            {mode === "aggregate-source" && hasSource && !expr.aggregate && (
               <li>
                 <button
                   type="button"
@@ -271,7 +257,7 @@ export function FieldRefInput({
                 </button>
               </li>
             )}
-            {showItemScope && !hasItemScope && hasSource && (
+            {showItemScope && hasSource && !hasItemScope && (
               <li>
                 <button
                   type="button"
@@ -283,6 +269,11 @@ export function FieldRefInput({
                 >
                   改为 Aggregate 项内路径
                 </button>
+              </li>
+            )}
+            {(hasSource || hasItemScope) && (
+              <li className="px-3 py-1 text-[10px] font-medium text-muted-foreground">
+                后处理
               </li>
             )}
             {processorOptions.map((p) => (
@@ -313,7 +304,7 @@ export function FieldRefInput({
                 </button>
               </li>
             ))}
-            {aliasOptions.length === 0 && (
+            {aliasOptions.length === 0 && (hasSource || hasItemScope) && (
               <li className="px-3 py-1.5 text-[10px] text-muted-foreground">
                 请先在全局配置中添加 Alias 表
               </li>

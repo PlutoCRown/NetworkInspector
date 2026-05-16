@@ -31,9 +31,8 @@ function readRawValue(
     return extractField(input, `${expr.source}:${expr.path}`);
   }
 
-  if (expr.path && item != null) {
-    return getByPath(item, expr.path);
-  }
+  // 无来源标签：path 为固定文本
+  if (expr.path) return expr.path;
 
   return null;
 }

@@ -1,6 +1,6 @@
 import type { FieldSource } from "./types";
 
-const SOURCES: FieldSource[] = ["query", "json", "form-data", "header"];
+const SOURCES: FieldSource[] = ["query", "json", "response", "form-data", "header"];
 
 export type FieldScope = "request" | "item";
 
@@ -40,13 +40,14 @@ function parseLegacyFieldRef(trimmed: string): FieldExpr | null {
   }
   const head = trimmed.slice(0, idx);
   const path = trimmed.slice(idx + 1);
-  if (head === "aggregate") {
+  if (head === "aggregate" || head === "item") {
     return { ...emptyFieldExpr("item"), path };
   }
   if (SOURCES.includes(head as FieldSource)) {
     return { ...emptyFieldExpr("request"), source: head as FieldSource, path };
   }
-  return null;
+  // 未知前缀视为固定文本（如含冒号的字面量）
+  return { ...emptyFieldExpr(), path: trimmed };
 }
 
 /** 从旧格式迁移；序列化格式：`json:path|aggregate|processor:time|alias:mapId` */
@@ -99,6 +100,8 @@ export function parseFieldExpr(raw: string): FieldExpr {
       expr.scope = "request";
       continue;
     }
+
+    if (!expr.path) expr.path = part;
   }
 
   if (expr.scope === "item" && !expr.path && parts.length === 1 && !parts[0]!.includes(":")) {

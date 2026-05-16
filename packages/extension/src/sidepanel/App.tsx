@@ -2,19 +2,15 @@ import { useMemo } from "react";
 import { CaptureListHeader } from "@/components/CaptureCard";
 import { CaptureRenderer } from "@/components/CaptureRenderer";
 import { useAppState, sendMessage } from "@/hooks/useAppState";
+import { getVisibleCaptures } from "@/shared/visible-captures";
 
 export function SidePanelApp() {
   const { state, loading } = useAppState();
 
-  const captures = useMemo(() => {
-    if (!state) return [];
-    const enabledIds = new Set(
-      state.ruleGroups.filter((g) => g.enabled).map((g) => g.id),
-    );
-    return state.captures
-      .filter((c) => enabledIds.has(c.ruleGroupId))
-      .sort((a, b) => b.timestamp - a.timestamp);
-  }, [state]);
+  const captures = useMemo(
+    () => (state ? getVisibleCaptures(state) : []),
+    [state],
+  );
 
   if (loading || !state) {
     return <div className="p-4 text-muted-foreground">加载中…</div>;

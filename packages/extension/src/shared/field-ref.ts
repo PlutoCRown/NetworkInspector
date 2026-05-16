@@ -3,6 +3,7 @@ import type { FieldSource } from "./types";
 export const REQUEST_FIELD_SOURCES: { id: FieldSource; label: string }[] = [
   { id: "query", label: "query" },
   { id: "json", label: "json" },
+  { id: "response", label: "response" },
   { id: "form-data", label: "form-data" },
   { id: "header", label: "header" },
 ];

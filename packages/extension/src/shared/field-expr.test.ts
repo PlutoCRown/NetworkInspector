@@ -23,6 +23,19 @@ describe("field-expr", () => {
     expect(parseFieldExpr("aggregate:action").path).toBe("action");
   });
 
+  test("parses response source", () => {
+    const expr = parseFieldExpr("response:data.items");
+    expect(expr.source).toBe("response");
+    expect(expr.path).toBe("data.items");
+  });
+
+  test("bare string is literal fixed text", () => {
+    const expr = parseFieldExpr("页面浏览");
+    expect(expr.source).toBeNull();
+    expect(expr.path).toBe("页面浏览");
+    expect(serializeFieldExpr(expr)).toBe("页面浏览");
+  });
+
   test("round-trip serialize", () => {
     const raw = serializeFieldExpr({
       scope: "item",

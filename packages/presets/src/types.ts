@@ -1,4 +1,10 @@
-export type FieldSource = "query" | "json" | "form-data" | "header" | "aggregate";
+export type FieldSource =
+  | "query"
+  | "json"
+  | "response"
+  | "form-data"
+  | "header"
+  | "aggregate";
 
 export type RendererId = "card" | "divider";
 

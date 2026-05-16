@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { FileUp, PanelRight, Pencil, Plus, RefreshCw } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  FileUp,
+  PanelRight,
+  RefreshCw,
+  Settings,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -15,6 +22,7 @@ export function PopupApp() {
   const { state, refresh } = useAppState();
   const fileRef = useRef<HTMLInputElement>(null);
   const [tabUrl, setTabUrl] = useState<string | null>(null);
+  const [groupsExpanded, setGroupsExpanded] = useState(false);
 
   useEffect(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -30,6 +38,10 @@ export function PopupApp() {
     if (!tabUrl) return true;
     return matchesAny(tabUrl, group.sites);
   };
+
+  const effectiveCount = globalOn
+    ? groups.filter((g) => g.enabled && siteMatches(g)).length
+    : 0;
 
   const handleImportFile = async (file: File) => {
     const text = await file.text();
@@ -84,9 +96,7 @@ export function PopupApp() {
             总开关
           </Label>
           <p className="text-[10px] text-muted-foreground">
-            {globalOn
-              ? `捕获已启用 · ${enabledCount} 个规则组参与`
-              : "已暂停所有新捕获"}
+            {globalOn ? "捕获已启用" : "已暂停所有新捕获"}
           </p>
         </div>
         <Switch
@@ -96,115 +106,137 @@ export function PopupApp() {
         />
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-medium text-muted-foreground">规则组</p>
+      <Button className="w-full justify-start" onClick={() => openSidePanel(() => window.close())}>
+        <PanelRight className="h-4 w-4" />
+        打开侧边栏
+      </Button>
+
+      <Button
+        variant="outline"
+        className="w-full justify-start"
+        onClick={() => openEditorTab(undefined, { view: "settings" })}
+      >
+        <Settings className="h-4 w-4" />
+        全局配置
+      </Button>
+
+      <section className="overflow-hidden rounded-lg border">
+        <div className="flex items-center gap-2 bg-muted/30 px-3 py-2">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">规则组</p>
+            <p className="text-[10px] text-muted-foreground">
+              {enabledCount} 个启用中
+              <span className="mx-1 text-muted-foreground/50">·</span>
+              {effectiveCount} 个生效中
+            </p>
+          </div>
           <Button
-            size="sm"
+            size="icon"
             variant="ghost"
-            className="h-7 px-2 text-xs"
-            onClick={() => openEditorTab(undefined, { newGroup: true })}
+            className="h-8 w-8 shrink-0"
+            onClick={() => setGroupsExpanded((v) => !v)}
+            title={groupsExpanded ? "收起" : "展开"}
           >
-            <Plus className="mr-1 h-3 w-3" />
-            新建
+            {groupsExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
           </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8 shrink-0"
+            onClick={() => fileRef.current?.click()}
+            title="导入 JSON"
+          >
+            <FileUp className="h-4 w-4" />
+          </Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleImportFile(f);
+              e.target.value = "";
+            }}
+          />
         </div>
-        {groups.length === 0 ? (
-          <p className="rounded-md border border-dashed p-3 text-center text-xs text-muted-foreground">
-            暂无规则组
-          </p>
-        ) : (
-          <ul className="max-h-[220px] space-y-1.5 overflow-y-auto">
-            {groups.map((group) => {
-              const siteOk = siteMatches(group);
-              const activeCapture = group.enabled && globalOn;
-              return (
-                <li
-                  key={group.id}
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg border p-2",
-                    activeCapture &&
-                    siteOk &&
-                    "border-green-200 bg-green-50/80 dark:border-green-800 dark:bg-green-950/40",
-                    activeCapture && !siteOk && "border-border bg-muted/30 opacity-60",
-                    !activeCapture && "border-border bg-muted/20",
-                  )}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p
+
+        {groupsExpanded && (
+          <div className="border-t p-2">
+            {groups.length === 0 ? (
+              <p className="py-3 text-center text-xs text-muted-foreground">暂无规则组</p>
+            ) : (
+              <ul className="max-h-[220px] space-y-1.5 overflow-y-auto">
+                {groups.map((group) => {
+                  const siteOk = siteMatches(group);
+                  const activeCapture = group.enabled && globalOn;
+                  return (
+                    <li
+                      key={group.id}
                       className={cn(
-                        "truncate text-sm font-medium",
-                        activeCapture && !siteOk && "text-muted-foreground",
+                        "flex items-center gap-2 rounded-lg border p-2",
+                        activeCapture &&
+                        siteOk &&
+                        "border-green-200 bg-green-50/80 dark:border-green-800 dark:bg-green-950/40",
+                        activeCapture && !siteOk && "border-border bg-muted/30 opacity-60",
+                        !activeCapture && "border-border bg-muted/20",
                       )}
                     >
-                      {group.name}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {group.enabled ? (
-                        <Badge variant="success" className="mr-1 px-1 py-0 text-[9px]">
-                          已启用
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="mr-1 px-1 py-0 text-[9px]">
-                          已关闭
-                        </Badge>
-                      )}
-                      {!siteOk && group.enabled && (
-                        <Badge variant="outline" className="mr-1 px-1 py-0 text-[9px]">
-                          该规则在当前网页不会生效
-                        </Badge>
-                      )}
-                      {group.rules.length} 条规则
-                    </p>
-                  </div>
-                  <Switch
-                    checked={group.enabled}
-                    disabled={!globalOn}
-                    onCheckedChange={() =>
-                      sendMessage({ type: "TOGGLE_RULE_GROUP", id: group.id })
-                    }
-                  />
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="h-8 w-8 shrink-0"
-                    onClick={() => openEditorTab(group.id)}
-                    title="编辑规则组"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                </li>
-              );
-            })}
-          </ul>
+                      <button
+                        type="button"
+                        className="min-w-0 flex-1 text-left"
+                        onClick={() => openEditorTab(group.id)}
+                      >
+                        <p
+                          className={cn(
+                            "truncate text-sm font-medium",
+                            activeCapture && !siteOk && "text-muted-foreground",
+                          )}
+                        >
+                          {group.name}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground">
+                          {group.enabled ? (
+                            <Badge variant="success" className="mr-1 px-1 py-0 text-[9px]">
+                              已启用
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="mr-1 px-1 py-0 text-[9px]">
+                              已关闭
+                            </Badge>
+                          )}
+                          {group.enabled && globalOn && siteOk && (
+                            <Badge variant="success" className="mr-1 px-1 py-0 text-[9px]">
+                              生效中
+                            </Badge>
+                          )}
+                          {group.enabled && globalOn && !siteOk && (
+                            <Badge variant="outline" className="mr-1 px-1 py-0 text-[9px]">
+                              当前页不匹配
+                            </Badge>
+                          )}
+                          {group.rules.length} 条规则
+                        </p>
+                      </button>
+                      <Switch
+                        checked={group.enabled}
+                        disabled={!globalOn}
+                        onCheckedChange={() =>
+                          sendMessage({ type: "TOGGLE_RULE_GROUP", id: group.id })
+                        }
+                      />
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         )}
-      </div>
-
-      <div className="grid gap-2 border-t pt-3">
-        <Button className="w-full justify-start" onClick={() => openSidePanel(() => window.close())}>
-          <PanelRight className="h-4 w-4" />
-          打开侧边栏
-        </Button>
-        <Button
-          className="w-full justify-start"
-          variant="outline"
-          onClick={() => fileRef.current?.click()}
-        >
-          <FileUp className="h-4 w-4" />
-          导入 JSON
-        </Button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void handleImportFile(f);
-            e.target.value = "";
-          }}
-        />
-      </div>
+      </section>
     </div>
   );
 }

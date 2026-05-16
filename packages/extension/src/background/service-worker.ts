@@ -1,4 +1,5 @@
 import type { Message } from "../shared/messages";
+import { syncActionBadge } from "../shared/action-badge";
 import { processCapture, validateRuleGroup } from "../shared/pipeline";
 import {
   appendCapture,
@@ -16,6 +17,7 @@ import type { AppState } from "../shared/types";
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => { });
 
 function broadcastState(state: AppState): void {
+  syncActionBadge(state);
   safeRuntimeSendMessage({ type: "STATE_UPDATED", state } satisfies Message);
 }
 
@@ -44,6 +46,9 @@ async function handleRawRequest(
         captures,
       } satisfies Message);
     }
+  }
+  if (captures !== state.captures) {
+    syncActionBadge({ ...state, captures });
   }
 }
 
@@ -168,3 +173,5 @@ chrome.storage.onChanged.addListener((changes, area) => {
     getState().then(broadcastState);
   }
 });
+
+void getState().then(syncActionBadge);

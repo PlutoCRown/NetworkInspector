@@ -94,7 +94,7 @@ export function CardCapture({ record }: CardCaptureProps) {
         >
           <div className="overflow-hidden">
             <CardContent className="border-t border-dashed pt-0">
-              <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-all rounded-md bg-muted p-2 text-xs">
+              <pre className="mt-2 whitespace-pre-wrap break-all rounded-md bg-muted p-2 text-xs">
                 {formatValue(expend)}
               </pre>
             </CardContent>

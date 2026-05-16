@@ -1,8 +1,8 @@
-import { normalizeAppConfig } from "./normalize-app-config";
-import { normalizeRuleGroup } from "./normalize-rule-group";
-import { validateRuleGroup } from "./pipeline";
-import { APP_VERSION } from "./app-meta";
-import type { AppConfig, AppState, RuleGroup } from "./types";
+import { validateRuleGroup } from "../capture/pipeline";
+import { normalizeRuleGroup } from "../rule/normalize";
+import type { AppConfig, AppState, RuleGroup } from "../types";
+import { APP_VERSION } from "./meta";
+import { normalizeAppConfig } from "./normalize-config";
 
 export const APP_EXPORT_VERSION = 1 as const;
 

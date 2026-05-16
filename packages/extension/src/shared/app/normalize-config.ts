@@ -1,4 +1,4 @@
-import type { AliasMapConfig, AliasMapGroup, AppConfig } from "./types";
+import type { AliasMapConfig, AliasMapGroup, AppConfig } from "../types";
 
 function isAliasMapGroup(value: unknown): value is AliasMapGroup {
   return (

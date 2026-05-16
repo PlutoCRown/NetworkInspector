@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import type { AppExportBundle, AppBundleStats, ImportBundleOptions } from "@/shared/app-bundle";
+import type { AppExportBundle, AppBundleStats, ImportBundleOptions } from "@/shared/app/bundle";
 import {
   configAvailableAfterImport,
   formatImportWarnings,
   getMissingFieldRefs,
   hasImportWarnings,
-} from "@/shared/field-refs";
+} from "@/shared/field/refs";
 import type { AppConfig } from "@/shared/types";
 
 interface ImportBundleDialogProps {

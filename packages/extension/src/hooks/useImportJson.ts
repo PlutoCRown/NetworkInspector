@@ -5,12 +5,12 @@ import {
   type AppExportBundle,
   type ImportBundleOptions,
   parseImportJson,
-} from "@/shared/app-bundle";
+} from "@/shared/app/bundle";
 import {
   formatImportWarnings,
   getMissingFieldRefs,
   hasImportWarnings,
-} from "@/shared/field-refs";
+} from "@/shared/field/refs";
 import type { AppConfig, RuleGroup } from "@/shared/types";
 
 export function useImportJson(

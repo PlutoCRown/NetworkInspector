@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { BUILTIN_PROCESSORS } from "@/shared/processors";
+import { BUILTIN_PROCESSORS } from "@/shared/field/processors";
 import type { AppConfig } from "@/shared/types";
 
 interface ProcessorSectionProps {

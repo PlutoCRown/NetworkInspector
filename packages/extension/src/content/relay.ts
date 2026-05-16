@@ -1,8 +1,8 @@
-import type { Message } from "../shared/messages";
+import type { Message } from "../shared/app/messages";
 import {
   isExtensionContextValid,
   safeRuntimeSendMessage,
-} from "../shared/extension-context";
+} from "../shared/util/extension-context";
 
 const NI_RELAY_DEAD = "network-inspector-relay-dead";
 

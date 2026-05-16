@@ -1,6 +1,6 @@
-import { createEmptyRule } from "./create-empty-rule";
-import { normalizeRendererId } from "./renderer-registry";
-import type { RuleGroup } from "./types";
+import { createEmptyRule } from "./create-empty";
+import { normalizeRendererId } from "../render/registry";
+import type { RuleGroup } from "../types";
 
 /** 从 rules 派生 capture，并规范化 renderer */
 export function normalizeRuleGroup(group: RuleGroup): RuleGroup {

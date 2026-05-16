@@ -1,6 +1,6 @@
-import { parseFieldExpr } from "./field-expr";
-import type { FieldSource } from "./types";
-import { getByPath } from "./path";
+import { parseFieldExpr } from "./expr";
+import type { FieldSource } from "../types";
+import { getByPath } from "../util/path";
 
 function parseJsonBody(body: string | null | undefined): unknown {
   if (!body) return null;

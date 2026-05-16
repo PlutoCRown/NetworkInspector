@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createEmptyRule } from "@/shared/create-empty-rule";
-import { normalizeRuleGroup } from "@/shared/normalize-rule-group";
+import { createEmptyRule } from "@/shared/rule/create-empty";
+import { normalizeRuleGroup } from "@/shared/rule/normalize";
 import type { AppConfig, Rule, RuleGroup } from "@/shared/types";
 import { GroupMetaSection } from "./form/GroupMetaSection";
 import { RuleBlockSection } from "./form/RuleBlockSection";

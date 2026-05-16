@@ -1,4 +1,4 @@
-import type { Rule } from "./types";
+import type { Rule } from "../types";
 
 export function createEmptyRule(url: string): Rule {
   return {

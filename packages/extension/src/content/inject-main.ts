@@ -1,4 +1,4 @@
-import type { Message } from "../shared/messages";
+import type { Message } from "../shared/app/messages";
 import type { RawRequestPayload } from "../shared/types";
 
 const NI_FLAG = "__NI_PATCHED__";

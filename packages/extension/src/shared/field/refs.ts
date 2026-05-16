@@ -1,6 +1,6 @@
-import { parseFieldExpr } from "./field-expr";
+import { parseFieldExpr } from "./expr";
 import { BUILTIN_PROCESSORS } from "./processors";
-import type { AppConfig, RuleGroup } from "./types";
+import type { AppConfig, RuleGroup } from "../types";
 
 const BUILTIN_PROCESSOR_IDS = new Set(BUILTIN_PROCESSORS.map((p) => p.id));
 

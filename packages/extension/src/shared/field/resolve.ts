@@ -1,9 +1,9 @@
 import { extractFromSource } from "./extract";
 import type { ExtractInput } from "./extract";
-import { parseFieldExpr, type FieldExpr } from "./field-expr";
-import { getByPath } from "./path";
+import { parseFieldExpr, type FieldExpr } from "./expr";
+import { getByPath } from "../util/path";
 import { applyAliasMap, runProcessors } from "./processors";
-import type { AppConfig } from "./types";
+import type { AppConfig } from "../types";
 
 export type SplitContext = Record<string, unknown>;
 

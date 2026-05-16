@@ -1,5 +1,5 @@
-import { countVisibleCaptures } from "./visible-captures";
-import type { AppState } from "./types";
+import { countVisibleCaptures } from "./visible";
+import type { AppState } from "../types";
 
 function badgeText(count: number): string {
   if (count <= 0) return "";

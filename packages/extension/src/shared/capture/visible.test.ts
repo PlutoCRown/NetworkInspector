@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { countVisibleCaptures, getVisibleCaptures } from "./visible-captures";
-import type { AppState, CaptureRecord } from "./types";
+import { countVisibleCaptures, getVisibleCaptures } from "./visible";
+import type { AppState, CaptureRecord } from "../types";
 
 function capture(id: string, ruleGroupId: string): CaptureRecord {
   return {

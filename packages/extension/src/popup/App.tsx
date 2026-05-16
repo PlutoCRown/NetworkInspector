@@ -15,7 +15,7 @@ import { ImportBundleDialog } from "@/components/ImportBundleDialog";
 import { useAppState, sendMessage } from "@/hooks/useAppState";
 import { useImportJson } from "@/hooks/useImportJson";
 import { openEditorTab, openSidePanel } from "@/lib/chrome-api";
-import { matchesAny } from "@/shared/regex";
+import { matchesAny } from "@/shared/util/regex";
 import { DEFAULT_APP_CONFIG, type RuleGroup } from "@/shared/types";
 import { cn } from "@/lib/utils";
 

@@ -1,14 +1,15 @@
 import { DEFAULT_RULE_GROUPS } from "@network-inspector/presets";
-import { normalizeAppConfig } from "./normalize-app-config";
-import { normalizeRuleGroup } from "./normalize-rule-group";
+import { normalizeRuleGroup } from "../rule/normalize";
 import {
   DEFAULT_APP_CONFIG,
+  MAX_CAPTURES,
+  STORAGE_KEYS,
   type AppConfig,
   type AppState,
   type CaptureRecord,
   type RuleGroup,
-} from "./types";
-import { STORAGE_KEYS, MAX_CAPTURES } from "./types";
+} from "../types";
+import { normalizeAppConfig } from "./normalize-config";
 
 export async function loadState(): Promise<AppState> {
   const result = await chrome.storage.local.get([

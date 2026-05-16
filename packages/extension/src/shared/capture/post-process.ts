@@ -1,5 +1,5 @@
-import type { AliasRule, FilterRule, HighlightRule } from "./types";
-import { deleteByPath, getByPath } from "./path";
+import type { AliasRule, FilterRule, HighlightRule } from "../types";
+import { deleteByPath, getByPath } from "../util/path";
 
 export function applyAlias(
   data: Record<string, unknown>,

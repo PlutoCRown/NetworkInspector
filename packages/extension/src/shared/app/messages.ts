@@ -1,11 +1,11 @@
-import type { AppExportBundle, ImportBundleOptions } from "./app-bundle";
-import type { AppConfig, CaptureRecord, RawRequestPayload, RuleGroup } from "./types";
+import type { AppExportBundle, ImportBundleOptions } from "./bundle";
+import type { AppConfig, CaptureRecord, RawRequestPayload, RuleGroup } from "../types";
 
 export type Message =
   | { type: "RAW_REQUEST"; payload: RawRequestPayload }
   | { type: "GET_STATE" }
   | { type: "CAPTURE_ADDED"; capture: CaptureRecord; captures: CaptureRecord[] }
-  | { type: "STATE_UPDATED"; state: import("./types").AppState }
+  | { type: "STATE_UPDATED"; state: import("../types").AppState }
   | { type: "TOGGLE_RULE_GROUP"; id: string }
   | { type: "TOGGLE_CAPTURE_ENABLED" }
   | { type: "SET_ACTIVE_GROUP"; id: string }

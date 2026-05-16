@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { resolveFieldExpr } from "./field-resolve";
-import { DEFAULT_APP_CONFIG } from "./types";
+import { resolveFieldExpr } from "./resolve";
+import { DEFAULT_APP_CONFIG } from "../types";
 
 describe("field-resolve", () => {
   test("literal text without source", () => {

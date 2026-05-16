@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronRight, FileUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { APP_NAME } from "@/shared/app-meta";
+import { APP_NAME } from "@/shared/app/meta";
 import type { RuleGroup } from "@/shared/types";
 import { cn } from "@/lib/utils";
 

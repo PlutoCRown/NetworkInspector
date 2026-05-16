@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { processCapture } from "./pipeline";
-import { DEFAULT_APP_CONFIG } from "./types";
-import type { CaptureRecord, RuleGroup } from "./types";
+import { DEFAULT_APP_CONFIG } from "../types";
+import type { CaptureRecord, RuleGroup } from "../types";
 
 const CFG = DEFAULT_APP_CONFIG;
 

@@ -7,8 +7,8 @@ import {
   serializeFieldExpr,
   SOURCE_TAG_OPTIONS,
   type FieldExpr,
-} from "@/shared/field-expr";
-import { BUILTIN_PROCESSORS } from "@/shared/processors";
+} from "@/shared/field/expr";
+import { BUILTIN_PROCESSORS } from "@/shared/field/processors";
 import type { AppConfig, FieldSource } from "@/shared/types";
 import { cn } from "@/lib/utils";
 

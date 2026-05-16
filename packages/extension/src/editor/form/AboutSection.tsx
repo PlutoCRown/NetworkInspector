@@ -1,7 +1,7 @@
 import { Download, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { APP_NAME, APP_VERSION } from "@/shared/app-meta";
-import { buildAppExport } from "@/shared/app-bundle";
+import { APP_NAME, APP_VERSION } from "@/shared/app/meta";
+import { buildAppExport } from "@/shared/app/bundle";
 import type { useImportJson } from "@/hooks/useImportJson";
 import type { AppState } from "@/shared/types";
 

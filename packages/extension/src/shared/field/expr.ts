@@ -1,4 +1,4 @@
-import type { FieldSource } from "./types";
+import type { FieldSource } from "../types";
 
 const SOURCES: FieldSource[] = ["query", "json", "response", "form-data", "header"];
 

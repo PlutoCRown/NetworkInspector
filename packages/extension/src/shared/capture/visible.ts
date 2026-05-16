@@ -1,4 +1,4 @@
-import type { AppState, CaptureRecord } from "./types";
+import type { AppState, CaptureRecord } from "../types";
 
 /** 与侧边栏一致：仅统计已启用规则组下的捕获条目（每条对应一个 CaptureRenderer） */
 export function getVisibleCaptures(state: AppState): CaptureRecord[] {

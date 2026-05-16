@@ -8,12 +8,12 @@ import {
   DEFAULT_SPLIT_NAME,
   getSplitNames,
   ruleHasSplits,
-} from "@/shared/field-expr";
+} from "@/shared/field/expr";
 import {
   defaultFieldsForRenderer,
   getRendererDefinition,
   RENDERER_DEFINITIONS,
-} from "@/shared/renderer-registry";
+} from "@/shared/render/registry";
 import type { AppConfig, RendererId, Rule } from "@/shared/types";
 
 interface RuleBlockSectionProps {

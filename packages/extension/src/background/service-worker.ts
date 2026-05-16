@@ -1,9 +1,9 @@
-import type { Message } from "../shared/messages";
-import { syncActionBadge } from "../shared/action-badge";
-import { parseAppExportBundle } from "../shared/app-bundle";
-import { normalizeAppConfig } from "../shared/normalize-app-config";
-import { normalizeRuleGroup } from "../shared/normalize-rule-group";
-import { processCapture, validateRuleGroup } from "../shared/pipeline";
+import type { Message } from "../shared/app/messages";
+import { syncActionBadge } from "../shared/capture/badge";
+import { parseAppExportBundle } from "../shared/app/bundle";
+import { normalizeAppConfig } from "../shared/app/normalize-config";
+import { normalizeRuleGroup } from "../shared/rule/normalize";
+import { processCapture, validateRuleGroup } from "../shared/capture/pipeline";
 import {
   appendCapture,
   clearCaptures,
@@ -12,8 +12,8 @@ import {
   saveAppConfig,
   saveCaptureEnabled,
   saveRuleGroups,
-} from "../shared/storage";
-import { safeRuntimeSendMessage } from "../shared/extension-context";
+} from "../shared/app/storage";
+import { safeRuntimeSendMessage } from "../shared/util/extension-context";
 import type { AppState } from "../shared/types";
 
 // 点击图标展开 popup，不直接打开侧边栏

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Message } from "@/shared/messages";
+import type { Message } from "@/shared/app/messages";
 import type { AppState } from "@/shared/types";
 
 export function useAppState() {

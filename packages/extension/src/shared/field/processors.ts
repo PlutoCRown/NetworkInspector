@@ -1,4 +1,4 @@
-import type { AppConfig } from "./types";
+import type { AppConfig } from "../types";
 
 export const BUILTIN_PROCESSORS: { id: string; label: string; description: string }[] = [
   { id: "time", label: "time", description: "HH:mm:ss（支持秒/毫秒时间戳）" },

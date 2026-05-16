@@ -1,10 +1,10 @@
-import { ruleHasSplits } from "./field-expr";
-import { resolveFieldExpr, resolveSplitArray, type SplitContext } from "./field-resolve";
-import { matchesAny } from "./regex";
-import { normalizeRuleGroup } from "./normalize-rule-group";
+import { ruleHasSplits } from "../field/expr";
+import { resolveFieldExpr, resolveSplitArray, type SplitContext } from "../field/resolve";
+import type { ExtractInput } from "../field/extract";
+import { normalizeRuleGroup } from "../rule/normalize";
+import { matchesAny } from "../util/regex";
 import { applyAlias, applyFilters, resolveHighlight } from "./post-process";
-import type { AppConfig, CaptureRecord, RawRequestPayload, Rule, RuleGroup } from "./types";
-import type { ExtractInput } from "./extract";
+import type { AppConfig, CaptureRecord, RawRequestPayload, Rule, RuleGroup } from "../types";
 
 function findRuleIndex(group: RuleGroup, requestUrl: string): number {
   const patterns = group.capture;

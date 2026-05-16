@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseFieldExpr, ruleHasSplits, serializeFieldExpr } from "./field-expr";
+import { parseFieldExpr, ruleHasSplits, serializeFieldExpr } from "./expr";
 
 describe("field-expr", () => {
   test("parses bracket source path processor alias", () => {

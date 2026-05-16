@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { buildAppExport, detectImportPayload, parseImportJson } from "./app-bundle";
-import { DEFAULT_APP_CONFIG } from "./types";
+import { buildAppExport, detectImportPayload, parseImportJson } from "./bundle";
+import { DEFAULT_APP_CONFIG } from "../types";
 
 describe("app-bundle", () => {
   test("detects full export bundle", () => {

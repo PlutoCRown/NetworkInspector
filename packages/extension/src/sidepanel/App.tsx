@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { CaptureListHeader } from "@/components/CaptureCard";
 import { CaptureRenderer } from "@/components/CaptureRenderer";
 import { useAppState, sendMessage } from "@/hooks/useAppState";
-import { getVisibleCaptures } from "@/shared/visible-captures";
+import { getVisibleCaptures } from "@/shared/capture/visible";
 
 export function SidePanelApp() {
   const { state, loading } = useAppState();

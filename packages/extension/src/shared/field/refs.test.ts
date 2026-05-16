@@ -3,8 +3,8 @@ import {
   collectFieldRefIdsFromRuleGroup,
   configAvailableAfterImport,
   getMissingFieldRefs,
-} from "./field-refs";
-import type { AppConfig, RuleGroup } from "./types";
+} from "./refs";
+import type { AppConfig, RuleGroup } from "../types";
 
 const GROUP: RuleGroup = {
   version: 1,

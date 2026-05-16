@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { APP_NAME } from "@/shared/app/meta";
+import { EXAMPLE_PROCESSORS } from "@/shared/field/processor-examples";
 import type { AppConfig, RuleGroup } from "@/shared/types";
 import { cn } from "@/lib/utils";
 
@@ -28,13 +29,84 @@ interface EditorSidebarProps {
 
 const NAV: { id: EditorNavSection; label: string; expandable: boolean }[] = [
   { id: "rule-groups", label: "规则组", expandable: true },
-  { id: "processors", label: "Processor", expandable: true },
-  { id: "alias", label: "Alias", expandable: true },
+  { id: "processors", label: "处理器", expandable: true },
+  { id: "alias", label: "别名", expandable: true },
   { id: "about", label: "About", expandable: false },
 ];
 
-function defaultExpanded(): Record<ExpandableSection, boolean> {
-  return { "rule-groups": true, processors: false, alias: false };
+const EXAMPLE_PROCESSOR_IDS = new Set(Object.keys(EXAMPLE_PROCESSORS));
+
+function expandedForSection(section: EditorNavSection): Record<ExpandableSection, boolean> {
+  return {
+    "rule-groups": section === "rule-groups",
+    processors: section === "processors",
+    alias: section === "alias",
+  };
+}
+
+interface SidebarSubListProps {
+  open: boolean;
+  emptyLabel?: string;
+  newLabel: string;
+  onNew: () => void;
+  children: ReactNode;
+}
+
+function SidebarSubList({ open, emptyLabel = "暂无", newLabel, onNew, children }: SidebarSubListProps) {
+  return (
+    <CollapsiblePanel open={open} className="ml-2 border-l border-border/60 pl-1">
+      <ul className="max-h-[min(280px,40vh)] space-y-0.5 overflow-y-auto py-1">{children}</ul>
+      <div className="border-t border-border/60 p-1.5">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 w-full justify-start px-2 text-xs"
+          onClick={onNew}
+        >
+          <Plus className="size-3.5" />
+          {newLabel}
+        </Button>
+      </div>
+    </CollapsiblePanel>
+  );
+}
+
+function SubListItem({
+  active,
+  onClick,
+  primary,
+  secondary,
+  leading,
+}: {
+  active: boolean;
+  onClick: () => void;
+  primary: string;
+  secondary?: string;
+  leading?: ReactNode;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors",
+          secondary ? "flex-col items-stretch gap-0.5" : "",
+          active
+            ? "bg-accent font-medium text-accent-foreground"
+            : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+        )}
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          {leading}
+          <span className={cn("truncate", !secondary && "flex-1")}>{primary}</span>
+        </div>
+        {secondary && (
+          <span className="truncate font-mono text-[10px] opacity-70">{secondary}</span>
+        )}
+      </button>
+    </li>
+  );
 }
 
 export function EditorSidebar({
@@ -52,10 +124,14 @@ export function EditorSidebar({
   onSelectAlias,
   onNewAlias,
 }: EditorSidebarProps) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
+  const [expanded, setExpanded] = useState(() => expandedForSection(section));
 
   const processorIds = Object.keys(config.customProcessors);
   const aliasEntries = Object.entries(config.aliasMaps);
+
+  useEffect(() => {
+    setExpanded((prev) => ({ ...prev, ...expandedForSection(section) }));
+  }, [section]);
 
   useEffect(() => {
     if (section === "processors" && processorIds.length > 0 && !selectedProcessorId) {
@@ -81,6 +157,13 @@ export function EditorSidebar({
     }
   };
 
+  const countFor = (id: EditorNavSection) => {
+    if (id === "rule-groups") return ruleGroups.length;
+    if (id === "processors") return processorIds.length;
+    if (id === "alias") return aliasEntries.length;
+    return null;
+  };
+
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col border-r bg-muted/30">
       <div className="border-b px-3 py-3">
@@ -95,6 +178,7 @@ export function EditorSidebar({
             const expandable = item.expandable;
             const expandKey = item.id as ExpandableSection;
             const isOpen = expandable ? expanded[expandKey] : false;
+            const count = countFor(item.id);
 
             return (
               <li key={item.id}>
@@ -127,179 +211,113 @@ export function EditorSidebar({
                   <button
                     type="button"
                     onClick={() => goSection(item.id)}
-                    className={cn(
-                      "flex min-w-0 flex-1 items-center py-2 pr-2 text-left text-sm font-medium",
-                    )}
+                    className="flex min-w-0 flex-1 items-center py-2 pr-2 text-left text-sm font-medium"
                   >
                     <span className="truncate">{item.label}</span>
-                    {item.id === "rule-groups" && (
+                    {count !== null && (
                       <span
                         className={cn(
                           "ml-auto text-[10px]",
                           active ? "text-primary-foreground/80" : "text-muted-foreground",
                         )}
                       >
-                        {ruleGroups.length}
-                      </span>
-                    )}
-                    {item.id === "processors" && (
-                      <span
-                        className={cn(
-                          "ml-auto text-[10px]",
-                          active ? "text-primary-foreground/80" : "text-muted-foreground",
-                        )}
-                      >
-                        {processorIds.length}
-                      </span>
-                    )}
-                    {item.id === "alias" && (
-                      <span
-                        className={cn(
-                          "ml-auto text-[10px]",
-                          active ? "text-primary-foreground/80" : "text-muted-foreground",
-                        )}
-                      >
-                        {aliasEntries.length}
+                        {count}
                       </span>
                     )}
                   </button>
                 </div>
 
                 {item.id === "rule-groups" && (
-                  <CollapsiblePanel open={isOpen} className="ml-2 border-l border-border/60 pl-1">
-                    <ul className="max-h-[min(280px,40vh)] space-y-0.5 overflow-y-auto py-1">
-                      {ruleGroups.map((g) => (
-                        <li key={g.id}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              goSection("rule-groups");
-                              onSelectGroup(g.id);
-                            }}
-                            className={cn(
-                              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors",
-                              selectedGroupId === g.id && section === "rule-groups"
-                                ? "bg-accent font-medium text-accent-foreground"
-                                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-                            )}
-                          >
+                  <SidebarSubList
+                    open={isOpen}
+                    newLabel="新建规则组"
+                    onNew={() => {
+                      goSection("rule-groups");
+                      onNewGroup();
+                    }}
+                  >
+                    {ruleGroups.length === 0 ? (
+                      <li className="px-2 py-1 text-[10px] text-muted-foreground">暂无</li>
+                    ) : (
+                      ruleGroups.map((g) => (
+                        <SubListItem
+                          key={g.id}
+                          active={selectedGroupId === g.id && section === "rule-groups"}
+                          primary={g.name}
+                          onClick={() => {
+                            goSection("rule-groups");
+                            onSelectGroup(g.id);
+                          }}
+                          leading={
                             <span
                               className={cn(
                                 "size-1.5 shrink-0 rounded-full",
                                 g.enabled ? "bg-green-500" : "bg-muted-foreground/40",
                               )}
                             />
-                            <span className="truncate">{g.name}</span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="border-t border-border/60 p-1.5">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 w-full justify-start px-2 text-xs"
-                        onClick={() => {
-                          goSection("rule-groups");
-                          onNewGroup();
-                        }}
-                      >
-                        <Plus className="size-3.5" />
-                        新建规则组
-                      </Button>
-                    </div>
-                  </CollapsiblePanel>
+                          }
+                        />
+                      ))
+                    )}
+                  </SidebarSubList>
                 )}
 
                 {item.id === "processors" && (
-                  <CollapsiblePanel open={isOpen} className="ml-2 border-l border-border/60 pl-1">
-                    <ul className="max-h-[min(240px,36vh)] space-y-0.5 overflow-y-auto py-1">
-                      {processorIds.length === 0 ? (
-                        <li className="px-2 py-1 text-[10px] text-muted-foreground">暂无</li>
-                      ) : (
-                        processorIds.map((id) => (
-                          <li key={id}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                goSection("processors");
-                                onSelectProcessor(id);
-                              }}
-                              className={cn(
-                                "flex w-full rounded-md px-2 py-1.5 text-left font-mono text-xs transition-colors",
-                                selectedProcessorId === id && section === "processors"
-                                  ? "bg-accent font-medium text-accent-foreground"
-                                  : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-                              )}
-                            >
-                              <span className="truncate">{id}</span>
-                            </button>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                    <div className="border-t border-border/60 p-1.5">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 w-full justify-start px-2 text-xs"
-                        onClick={() => {
-                          goSection("processors");
-                          onNewProcessor();
-                        }}
-                      >
-                        <Plus className="size-3.5" />
-                        新建 Processor
-                      </Button>
-                    </div>
-                  </CollapsiblePanel>
+                  <SidebarSubList
+                    open={isOpen}
+                    newLabel="新建处理器"
+                    onNew={() => {
+                      goSection("processors");
+                      onNewProcessor();
+                    }}
+                  >
+                    {processorIds.length === 0 ? (
+                      <li className="px-2 py-1 text-[10px] text-muted-foreground">暂无</li>
+                    ) : (
+                      processorIds.map((id) => (
+                        <SubListItem
+                          key={id}
+                          active={selectedProcessorId === id && section === "processors"}
+                          primary={id}
+                          secondary={
+                            EXAMPLE_PROCESSOR_IDS.has(id) ? "示例" : undefined
+                          }
+                          onClick={() => {
+                            goSection("processors");
+                            onSelectProcessor(id);
+                          }}
+                        />
+                      ))
+                    )}
+                  </SidebarSubList>
                 )}
 
                 {item.id === "alias" && (
-                  <CollapsiblePanel open={isOpen} className="ml-2 border-l border-border/60 pl-1">
-                    <ul className="max-h-[min(240px,36vh)] space-y-0.5 overflow-y-auto py-1">
-                      {aliasEntries.length === 0 ? (
-                        <li className="px-2 py-1 text-[10px] text-muted-foreground">暂无</li>
-                      ) : (
-                        aliasEntries.map(([mapkey, group]) => (
-                          <li key={mapkey}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                goSection("alias");
-                                onSelectAlias(mapkey);
-                              }}
-                              className={cn(
-                                "flex w-full flex-col rounded-md px-2 py-1.5 text-left text-xs transition-colors",
-                                selectedAliasKey === mapkey && section === "alias"
-                                  ? "bg-accent font-medium text-accent-foreground"
-                                  : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-                              )}
-                            >
-                              <span className="truncate">{group.name || mapkey}</span>
-                              <span className="truncate font-mono text-[10px] opacity-70">
-                                {mapkey}
-                              </span>
-                            </button>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                    <div className="border-t border-border/60 p-1.5">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 w-full justify-start px-2 text-xs"
-                        onClick={() => {
-                          goSection("alias");
-                          onNewAlias();
-                        }}
-                      >
-                        <Plus className="size-3.5" />
-                        新建 Alias 组
-                      </Button>
-                    </div>
-                  </CollapsiblePanel>
+                  <SidebarSubList
+                    open={isOpen}
+                    newLabel="新建别名组"
+                    onNew={() => {
+                      goSection("alias");
+                      onNewAlias();
+                    }}
+                  >
+                    {aliasEntries.length === 0 ? (
+                      <li className="px-2 py-1 text-[10px] text-muted-foreground">暂无</li>
+                    ) : (
+                      aliasEntries.map(([mapkey, group]) => (
+                        <SubListItem
+                          key={mapkey}
+                          active={selectedAliasKey === mapkey && section === "alias"}
+                          primary={group.name || mapkey}
+                          secondary={mapkey}
+                          onClick={() => {
+                            goSection("alias");
+                            onSelectAlias(mapkey);
+                          }}
+                        />
+                      ))
+                    )}
+                  </SidebarSubList>
                 )}
               </li>
             );

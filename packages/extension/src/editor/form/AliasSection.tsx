@@ -217,14 +217,14 @@ export function AliasSection({ config, mapkey, onChange, onRemove }: AliasSectio
 
   if (!mapkey || !group) {
     return (
-      <p className="text-sm text-muted-foreground">在左侧选择 Alias 组，或新建一个。</p>
+      <p className="text-sm text-muted-foreground">在左侧选择别名组，或新建一个。</p>
     );
   }
 
   return (
     <section className="mx-auto max-w-2xl space-y-4">
       <div>
-        <h2 className="font-medium">Alias</h2>
+        <h2 className="font-medium">别名</h2>
         <p className="text-xs text-muted-foreground">
           填写组名即可；ID 自动生成，字段中使用{" "}
           <code className="text-foreground">[alias:ID]</code> 引用

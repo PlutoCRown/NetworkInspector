@@ -1,8 +1,7 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { CaptureRecord } from "@/shared/types";
 import { cn, formatTime, formatValue } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 
 const toneClass: Record<string, string> = {
   danger: "text-red-600 dark:text-red-400",
@@ -20,9 +19,6 @@ interface CardCaptureProps {
 
 export function CardCapture({ record }: CardCaptureProps) {
   const [expanded, setExpanded] = useState(false);
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const hoverRef = useRef(false);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const title = formatValue(record.data.title);
   const desc = hasContent(record.data.desc) ? formatValue(record.data.desc) : null;
@@ -32,40 +28,23 @@ export function CardCapture({ record }: CardCaptureProps) {
 
   const showExpand = hasContent(expand);
   const showPopover = hasContent(popover);
+  const expandable = showExpand || showPopover;
 
-  const openPopover = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    hoverRef.current = true;
-    setPopoverOpen(true);
+  const toggleExpanded = () => {
+    if (expandable) setExpanded((v) => !v);
   };
 
-  const scheduleClosePopover = () => {
-    hoverRef.current = false;
-    closeTimer.current = setTimeout(() => {
-      if (!hoverRef.current) setPopoverOpen(false);
-    }, 120);
-  };
-
-  const card = (
-    <Card
-      className={cn(
-        "overflow-hidden transition-shadow",
-        showPopover && "hover:shadow-md",
-      )}
-      onMouseEnter={showPopover ? openPopover : undefined}
-      onMouseLeave={showPopover ? scheduleClosePopover : undefined}
-    >
+  return (
+    <Card className="overflow-hidden">
       <CardHeader
-        className={cn("cursor-pointer pb-2", !showExpand && "cursor-default")}
-        onClick={() => {
-          if (showExpand) setExpanded((v) => !v);
-        }}
-        role={showExpand ? "button" : undefined}
-        tabIndex={showExpand ? 0 : undefined}
+        className={cn("pb-2", expandable && "cursor-pointer")}
+        onClick={toggleExpanded}
+        role={expandable ? "button" : undefined}
+        tabIndex={expandable ? 0 : undefined}
         onKeyDown={(e) => {
-          if (showExpand && (e.key === "Enter" || e.key === " ")) {
+          if (expandable && (e.key === "Enter" || e.key === " ")) {
             e.preventDefault();
-            setExpanded((v) => !v);
+            toggleExpanded();
           }
         }}
       >
@@ -87,38 +66,27 @@ export function CardCapture({ record }: CardCaptureProps) {
         </div>
       </CardHeader>
 
-      {showExpand && (
+      {expandable && (
         <div
           className="grid transition-[grid-template-rows] duration-300 ease-out"
           style={{ gridTemplateRows: expanded ? "1fr" : "0fr" }}
         >
           <div className="overflow-hidden">
-            <CardContent className="border-t border-dashed pt-0">
-              <pre className="mt-2 whitespace-pre-wrap break-all rounded-md bg-muted p-2 text-xs">
-                {formatValue(expand)}
-              </pre>
+            <CardContent className="space-y-2 border-t border-dashed pt-0">
+              {showExpand && (
+                <pre className="mt-2 whitespace-pre-wrap break-all rounded-md bg-muted p-2 text-xs">
+                  {formatValue(expand)}
+                </pre>
+              )}
+              {showPopover && (
+                <pre className="whitespace-pre-wrap break-all rounded-md bg-muted p-2 text-xs">
+                  {formatValue(popover)}
+                </pre>
+              )}
             </CardContent>
           </div>
         </div>
       )}
     </Card>
-  );
-
-  if (!showPopover) return card;
-
-  return (
-    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-      <PopoverAnchor asChild>{card}</PopoverAnchor>
-      <PopoverContent
-        className="max-h-64 w-80 overflow-auto p-3"
-        side="right"
-        align="start"
-        onMouseEnter={openPopover}
-        onMouseLeave={scheduleClosePopover}
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
-        <pre className="whitespace-pre-wrap break-all text-xs">{formatValue(popover)}</pre>
-      </PopoverContent>
-    </Popover>
   );
 }

@@ -178,15 +178,15 @@ export function EditorApp() {
 
   const headerTitle = {
     "rule-groups": group.name,
-    processors: selectedProcessorId ?? "Processor",
-    alias: aliasGroup?.name ?? selectedAliasKey ?? "Alias",
+    processors: selectedProcessorId ?? "处理器",
+    alias: aliasGroup?.name ?? selectedAliasKey ?? "别名",
     about: "About",
   }[section];
 
   const headerDesc = {
     "rule-groups": "规则组编辑",
-    processors: "Processor 函数编辑",
-    alias: "Alias 映射表",
+    processors: "处理器函数编辑",
+    alias: "别名映射表",
     about: "版本信息与数据导出",
   }[section];
 

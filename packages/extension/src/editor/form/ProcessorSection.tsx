@@ -23,7 +23,7 @@ export function ProcessorSection({
   if (!processorId || !config.customProcessors[processorId]) {
     return (
       <p className="text-sm text-muted-foreground">
-        在左侧选择 Processor，或新建一个。示例（time / date / datetime）可直接编辑或删除。
+        在左侧选择处理器，或新建一个。示例（time / date / datetime）可直接编辑或删除。
       </p>
     );
   }
@@ -51,7 +51,7 @@ export function ProcessorSection({
   return (
     <section className="mx-auto max-w-2xl space-y-4">
       <div>
-        <h2 className="font-medium">Processor</h2>
+        <h2 className="font-medium">处理器</h2>
         <p className="text-xs text-muted-foreground">
           编写 JS 函数体，签名为 <code className="text-foreground">(value) =&gt; 任意</code>
           ，字段中使用 <code className="text-foreground">[processor:ID]</code>

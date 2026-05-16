@@ -18,7 +18,7 @@ describe("field-resolve", () => {
 
   test("response reads response body only", () => {
     const value = resolveFieldExpr(
-      "response:event",
+      "[source:response]event",
       {
         url: "https://example.com/api",
         requestBody: JSON.stringify({ event: "req" }),

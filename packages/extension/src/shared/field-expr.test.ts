@@ -1,10 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  hasAggregateSource,
-  migrateFieldExprString,
-  parseFieldExpr,
-  serializeFieldExpr,
-} from "./field-expr";
+import { hasAggregateSource, parseFieldExpr, serializeFieldExpr } from "./field-expr";
 
 describe("field-expr", () => {
   test("parses bracket source path processor alias", () => {
@@ -19,32 +14,19 @@ describe("field-expr", () => {
   });
 
   test("parses aggregate source", () => {
-    const expr = parseFieldExpr("[source:json]data[aggregate]");
+    const raw = "[source:json]data[aggregate]";
+    const expr = parseFieldExpr(raw);
     expect(expr.source).toBe("json");
     expect(expr.path).toBe("data");
     expect(expr.aggregate).toBe(true);
-    expect(hasAggregateSource("[source:json]data[aggregate]")).toBe(true);
+    expect(hasAggregateSource(raw)).toBe(true);
   });
 
-  test("parses item scope with tags", () => {
+  test("parses item scope with processor", () => {
     const expr = parseFieldExpr("[scope:item]time[processor:date]");
     expect(expr.scope).toBe("item");
     expect(expr.path).toBe("time");
-    expect(expr.processors).toEqual(["date"]);
     expect(serializeFieldExpr(expr)).toBe("[scope:item]time[processor:date]");
-  });
-
-  test("migrates legacy pipe format to brackets", () => {
-    expect(migrateFieldExprString("json:event|processor:time|alias:ev")).toBe(
-      "[source:json]event[processor:time][alias:ev]",
-    );
-  });
-
-  test("legacy aggregate:path migrates via parse", () => {
-    const expr = parseFieldExpr("aggregate:action");
-    expect(expr.scope).toBe("item");
-    expect(expr.path).toBe("action");
-    expect(serializeFieldExpr(expr)).toBe("[scope:item]action");
   });
 
   test("bare string is literal fixed text", () => {

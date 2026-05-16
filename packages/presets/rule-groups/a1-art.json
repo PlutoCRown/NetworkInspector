@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "id": "acme-analytics-2026",
+  "name": "A1.art 埋点捕获",
+  "enabled": true,
+  "sites": [
+    "a1.art/.*"
+  ],
+  "capture": [
+    "data\\.a1\\.art"
+  ],
+  "rules": [
+    {
+      "id": "rule-a1",
+      "url": "data\\.a1\\.art",
+      "renderer": "card",
+      "aggregateFrom": "[source:json][aggregate]",
+      "fields": {
+        "title": "[scope:item]action",
+        "popover": "[scope:item]properties"
+      }
+    }
+  ]
+}

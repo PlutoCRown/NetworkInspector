@@ -4,23 +4,16 @@ function isAliasMapGroup(value: unknown): value is AliasMapGroup {
   return (
     !!value &&
     typeof value === "object" &&
-    "mappings" in value &&
+    typeof (value as AliasMapGroup).name === "string" &&
     typeof (value as AliasMapGroup).mappings === "object"
   );
 }
 
-/** 兼容旧版 aliasMaps：值为平铺 Record 时迁移为 { name, mappings } */
-export function normalizeAliasMaps(raw: unknown): AliasMapConfig {
-  if (!raw || typeof raw !== "object") return {};
+export function normalizeAliasMaps(raw: AliasMapConfig): AliasMapConfig {
   const out: AliasMapConfig = {};
-  for (const [mapkey, val] of Object.entries(raw as Record<string, unknown>)) {
+  for (const [mapkey, val] of Object.entries(raw)) {
     if (isAliasMapGroup(val)) {
-      out[mapkey] = {
-        name: typeof val.name === "string" && val.name.trim() ? val.name : mapkey,
-        mappings: { ...val.mappings },
-      };
-    } else if (val && typeof val === "object") {
-      out[mapkey] = { name: mapkey, mappings: { ...(val as Record<string, string>) } };
+      out[mapkey] = { name: val.name, mappings: { ...val.mappings } };
     }
   }
   return out;
@@ -28,7 +21,7 @@ export function normalizeAliasMaps(raw: unknown): AliasMapConfig {
 
 export function normalizeAppConfig(config: AppConfig): AppConfig {
   return {
-    ...config,
+    customProcessors: { ...config.customProcessors },
     aliasMaps: normalizeAliasMaps(config.aliasMaps),
   };
 }

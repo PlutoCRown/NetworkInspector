@@ -24,7 +24,7 @@
 我们预设几种 Renderer。
 
 1. 第一种 Renderer 支持 title: string popover: object 这样的结构，那么这个编辑板块下面，其实只包含两个输入框，允许用户输入。
-2. 第二种 Renderer 支持 title: string desc: string expend: object 这样的结构，那么这个编辑板块下面，其实只包含三个输入框，允许用户输入。
+2. 第二种 Renderer 支持 title: string desc: string expand: object 这样的结构，那么这个编辑板块下面，其实只包含三个输入框，允许用户输入。
 
 最后，我们在侧边栏这里显示当前捕获组捕获到的所有内容。
 然后，它根据所选的 Render 来渲染当前的卡片。

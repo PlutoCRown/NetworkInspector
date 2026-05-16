@@ -25,7 +25,7 @@
 ### Side Panel（侧边栏）— 主展示面
 
 - 展示当前规则组下**已捕获条目列表**（时间倒序或实现约定，需在 UI 标明排序）。
-- 按 Renderer / 模板渲染单张卡片（[06-renderers-and-sidebar.md](./06-renderers-and-sidebar.md)）。
+- 按预设 Renderer 渲染单张卡片（[06-renderers-and-sidebar.md](./06-renderers-and-sidebar.md)）。
 
 ### Toolbar Action
 
@@ -35,7 +35,7 @@
 
 ### Options / Editor 页面
 
-- 规则组 CRUD、Import/Export、普通/高级模式切换。
+- 规则组 CRUD、Processor/Alias 全局配置、Import/Export。
 - 与侧边栏共享同一套规则组数据模型（[03](./03-rule-group-model.md)）。
 
 ## 2.4 数据流（预期）

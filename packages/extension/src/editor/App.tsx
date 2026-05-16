@@ -29,7 +29,6 @@ function emptyGroup(): RuleGroup {
 
 function parseSectionParam(value: string | null): EditorNavSection {
   if (value === "processors" || value === "alias" || value === "about") return value;
-  if (value === "settings") return "processors";
   return "rule-groups";
 }
 

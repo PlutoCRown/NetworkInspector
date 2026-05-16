@@ -16,8 +16,8 @@
       "url": "/v1/events",
       "renderer": "card",
       "fields": {
-        "title": "json:event",
-        "popover": "json:properties"
+        "title": "[source:json]event",
+        "popover": "[source:json]properties"
       },
       "alias": [
         {
@@ -57,13 +57,13 @@
       "url": "/v1/beacon",
       "renderer": "card",
       "fields": {
-        "title": "query:action",
-        "desc": "query:module",
-        "expend": "json:"
+        "title": "[source:query]action",
+        "desc": "[source:query]module",
+        "expand": "[source:json]"
       },
       "filters": [
         {
-          "field": "expend",
+          "field": "expand",
           "path": "_internal",
           "action": "strip"
         }

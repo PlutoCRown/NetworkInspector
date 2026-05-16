@@ -17,7 +17,10 @@ const TEST_GROUP: RuleGroup = {
       id: "events-api",
       url: "/v1/events",
       renderer: "card",
-      fields: { title: "json:event", popover: "json:properties" },
+      fields: {
+        title: "[source:json]event",
+        popover: "[source:json]properties",
+      },
       alias: [{ field: "title", match: "page_view", replace: "页面浏览" }],
       filters: [{ field: "popover", path: "debug", equals: true, action: "drop" }],
     },
@@ -26,11 +29,11 @@ const TEST_GROUP: RuleGroup = {
       url: "/v1/beacon",
       renderer: "card",
       fields: {
-        title: "query:action",
-        desc: "query:module",
-        expend: "json:",
+        title: "[source:query]action",
+        desc: "[source:query]module",
+        expand: "[source:json]",
       },
-      filters: [{ field: "expend", path: "_internal", action: "strip" }],
+      filters: [{ field: "expand", path: "_internal", action: "strip" }],
     },
   ],
 };
@@ -155,7 +158,7 @@ describe("processCapture", () => {
           id: "batch",
           url: "/v1/batch",
           renderer: "card",
-          aggregateFrom: "json:|aggregate",
+          aggregateFrom: "[source:json][aggregate]",
           fields: { title: "[scope:item]event[alias:ev]" },
         },
       ],
@@ -177,7 +180,7 @@ describe("processCapture", () => {
     expect(list[0]?.data.title).toBe("页面浏览");
   });
 
-  test("strips _internal from beacon expend", () => {
+  test("strips _internal from beacon expand", () => {
     const result = single(
       processCapture(
         TEST_GROUP,
@@ -190,6 +193,6 @@ describe("processCapture", () => {
         CFG,
       ),
     );
-    expect(result?.data.expend).toEqual({ data: { ok: 1 } });
+    expect(result?.data.expand).toEqual({ data: { ok: 1 } });
   });
 });

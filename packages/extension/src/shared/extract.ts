@@ -1,14 +1,6 @@
-import { parseFieldRef as parseRef } from "./field-ref";
+import { parseFieldExpr } from "./field-expr";
 import type { FieldSource } from "./types";
 import { getByPath } from "./path";
-
-export { parseFieldRef } from "./field-ref";
-
-function parseFieldRef(ref: string): { source: FieldSource; path: string } | null {
-  const { source, path } = parseRef(ref);
-  if (!source) return null;
-  return { source, path };
-}
 
 function parseJsonBody(body: string | null | undefined): unknown {
   if (!body) return null;
@@ -40,14 +32,17 @@ export interface ExtractInput {
   responseBody?: string | null;
 }
 
-export function extractField(
-  input: ExtractInput,
-  ref: string,
-): unknown {
-  const parsed = parseFieldRef(ref);
-  if (!parsed) return null;
+function parseExtractRef(ref: string): { source: FieldSource; path: string } | null {
+  const expr = parseFieldExpr(ref);
+  if (expr.scope === "item" || !expr.source) return null;
+  return { source: expr.source, path: expr.path };
+}
 
-  const { source, path } = parsed;
+export function extractFromSource(
+  input: ExtractInput,
+  source: FieldSource,
+  path: string,
+): unknown {
   const url = new URL(input.url, input.url.startsWith("http") ? undefined : "https://placeholder.local");
 
   switch (source) {
@@ -80,6 +75,12 @@ export function extractField(
     default:
       return null;
   }
+}
+
+export function extractField(input: ExtractInput, ref: string): unknown {
+  const parsed = parseExtractRef(ref);
+  if (!parsed) return null;
+  return extractFromSource(input, parsed.source, parsed.path);
 }
 
 export function extractFields(

@@ -1,21 +1,21 @@
-import { RENDERER_DEFINITIONS, type RendererDefinition } from "@network-inspector/presets";
+import {
+  RENDERER_DEFINITIONS,
+  type RendererDefinition,
+  type RendererId,
+} from "@network-inspector/presets";
 
 export { RENDERER_DEFINITIONS, type RendererDefinition };
 
-const RENDERER_MAP = new Map(RENDERER_DEFINITIONS.map((r) => [r.id, r]));
+const RENDERER_MAP = new Map<RendererId, RendererDefinition>(
+  RENDERER_DEFINITIONS.map((r) => [r.id, r]),
+);
 
-/** 兼容旧配置 */
-const LEGACY_ALIASES: Record<string, string> = {
-  "title-popover": "card",
-  "title-desc-expand": "card",
-};
-
-export function resolveRendererId(id: string): string {
-  return LEGACY_ALIASES[id] ?? id;
+export function normalizeRendererId(id: string): RendererId {
+  return RENDERER_MAP.has(id as RendererId) ? (id as RendererId) : "card";
 }
 
 export function getRendererDefinition(id: string): RendererDefinition | undefined {
-  return RENDERER_MAP.get(resolveRendererId(id));
+  return RENDERER_MAP.get(normalizeRendererId(id));
 }
 
 export function getRendererFields(rendererId: string): string[] {
@@ -24,9 +24,11 @@ export function getRendererFields(rendererId: string): string[] {
 
 export function defaultFieldsForRenderer(
   rendererId: string,
-  aggregate: boolean,
+  itemScope: boolean,
 ): Record<string, string> {
   const keys = getRendererFields(rendererId);
-  if (aggregate) return Object.fromEntries(keys.map((k) => [k, `item:${k}`]));
-  return Object.fromEntries(keys.map((k) => [k, `json:${k}`]));
+  if (itemScope) {
+    return Object.fromEntries(keys.map((k) => [k, `[scope:item]${k}`]));
+  }
+  return Object.fromEntries(keys.map((k) => [k, `[source:json]${k}`]));
 }

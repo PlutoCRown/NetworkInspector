@@ -26,11 +26,11 @@ export function CardCapture({ record }: CardCaptureProps) {
 
   const title = formatValue(record.data.title);
   const desc = hasContent(record.data.desc) ? formatValue(record.data.desc) : null;
-  const expend = record.data.expend;
+  const expand = record.data.expand;
   const popover = record.data.popover;
   const tone = record.highlight?.tone;
 
-  const showExpand = hasContent(expend);
+  const showExpand = hasContent(expand);
   const showPopover = hasContent(popover);
 
   const openPopover = () => {
@@ -95,7 +95,7 @@ export function CardCapture({ record }: CardCaptureProps) {
           <div className="overflow-hidden">
             <CardContent className="border-t border-dashed pt-0">
               <pre className="mt-2 whitespace-pre-wrap break-all rounded-md bg-muted p-2 text-xs">
-                {formatValue(expend)}
+                {formatValue(expand)}
               </pre>
             </CardContent>
           </div>

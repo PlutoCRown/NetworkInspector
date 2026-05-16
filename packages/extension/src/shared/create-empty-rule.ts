@@ -1,12 +1,10 @@
-import { defaultFieldsForRenderer } from "./renderer-registry";
 import type { Rule } from "./types";
 
-export function createEmptyRule(url: string, renderer = "card"): Rule {
+export function createEmptyRule(url: string): Rule {
   return {
-    id: `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    id: `rule-${Date.now()}`,
     url,
-    renderer,
-    aggregate: false,
-    fields: defaultFieldsForRenderer(renderer, false),
+    renderer: "card",
+    fields: { title: "[source:json]event" },
   };
 }

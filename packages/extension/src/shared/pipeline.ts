@@ -86,7 +86,7 @@ function processRuleCapture(
   };
 
   const aggregateFrom = rule.aggregateFrom ?? "";
-  const useAggregate = rule.aggregate ?? hasAggregateSource(aggregateFrom);
+  const useAggregate = hasAggregateSource(aggregateFrom);
 
   if (useAggregate && aggregateFrom) {
     const arr = resolveAggregateArray(aggregateFrom, input);

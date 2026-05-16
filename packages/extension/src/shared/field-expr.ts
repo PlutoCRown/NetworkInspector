@@ -61,7 +61,16 @@ function applyTag(expr: FieldExpr, kind: string, value: string) {
   }
 }
 
-function parseBracketFormat(trimmed: string): FieldExpr {
+/** 存储格式：[source:json]action[processor:time][alias:mapkey] */
+export function parseFieldExpr(raw: string): FieldExpr {
+  const trimmed = raw.trim();
+  if (!trimmed) return emptyFieldExpr();
+  if (!trimmed.includes("[")) {
+    const expr = emptyFieldExpr();
+    expr.path = trimmed;
+    return expr;
+  }
+
   const expr = emptyFieldExpr();
   const pathParts: string[] = [];
   let lastIndex = 0;
@@ -82,92 +91,6 @@ function parseBracketFormat(trimmed: string): FieldExpr {
   if (tail) pathParts.push(tail);
   expr.path = pathParts.join("");
   return expr;
-}
-
-function parsePipeFormat(trimmed: string): FieldExpr {
-  const parts = trimmed.split("|").map((p) => p.trim()).filter(Boolean);
-  const expr = emptyFieldExpr();
-
-  for (const part of parts) {
-    if (part === "aggregate") {
-      expr.aggregate = true;
-      continue;
-    }
-    if (part.startsWith("processor:")) {
-      expr.processors.push(part.slice("processor:".length));
-      continue;
-    }
-    if (part.startsWith("alias:")) {
-      expr.aliasMap = part.slice("alias:".length);
-      continue;
-    }
-    if (part === "item") {
-      expr.scope = "item";
-      continue;
-    }
-
-    const colon = part.indexOf(":");
-    if (colon === -1) {
-      if (!expr.path) expr.path = part;
-      continue;
-    }
-
-    const head = part.slice(0, colon);
-    const rest = part.slice(colon + 1);
-
-    if (head === "aggregate" || head === "item") {
-      expr.scope = "item";
-      expr.path = rest;
-      continue;
-    }
-
-    if (SOURCES.includes(head as FieldSource)) {
-      expr.source = head as FieldSource;
-      expr.path = rest;
-      expr.scope = "request";
-      continue;
-    }
-
-    if (!expr.path) expr.path = part;
-  }
-
-  return expr;
-}
-
-function parseLegacyColonFormat(trimmed: string): FieldExpr | null {
-  if (trimmed.includes("|") || trimmed.includes("[")) return null;
-  const idx = trimmed.indexOf(":");
-  if (idx === -1) {
-    const expr = emptyFieldExpr();
-    expr.path = trimmed;
-    return expr;
-  }
-  const head = trimmed.slice(0, idx);
-  const path = trimmed.slice(idx + 1);
-  if (head === "aggregate" || head === "item") {
-    return { ...emptyFieldExpr("item"), path };
-  }
-  if (SOURCES.includes(head as FieldSource)) {
-    return { ...emptyFieldExpr("request"), source: head as FieldSource, path };
-  }
-  return { ...emptyFieldExpr(), path: trimmed };
-}
-
-/**
- * 存储格式：[source:json]action[processor:time][alias:mapkey]
- * 兼容旧 pipe / source:path 写法，序列化一律输出方括号格式。
- */
-export function parseFieldExpr(raw: string): FieldExpr {
-  const trimmed = raw.trim();
-  if (!trimmed) return emptyFieldExpr();
-
-  if (trimmed.includes("[")) return parseBracketFormat(trimmed);
-  if (trimmed.includes("|")) return parsePipeFormat(trimmed);
-
-  const legacy = parseLegacyColonFormat(trimmed);
-  if (legacy) return legacy;
-
-  return emptyFieldExpr();
 }
 
 export function serializeFieldExpr(expr: FieldExpr): string {
@@ -194,13 +117,6 @@ export function serializeFieldExpr(expr: FieldExpr): string {
   return out;
 }
 
-/** 将旧格式字段迁移为方括号存储 */
-export function migrateFieldExprString(raw: string | undefined): string {
-  if (!raw?.trim()) return raw ?? "";
-  if (raw.includes("[")) return raw;
-  return serializeFieldExpr(parseFieldExpr(raw));
-}
-
 export function isAggregateSourceExpr(expr: FieldExpr): boolean {
   return expr.aggregate && expr.scope === "request" && Boolean(expr.source);
 }
@@ -215,7 +131,3 @@ export const SOURCE_TAG_OPTIONS: FieldExprTagOption[] = SOURCES.map((id) => ({
   label: id,
   kind: "source",
 }));
-
-export function formatFieldExprLabel(expr: FieldExpr): string {
-  return serializeFieldExpr(expr);
-}

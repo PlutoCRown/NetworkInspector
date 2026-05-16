@@ -1,4 +1,4 @@
-import { extractField } from "./extract";
+import { extractFromSource } from "./extract";
 import type { ExtractInput } from "./extract";
 import { parseFieldExpr, type FieldExpr } from "./field-expr";
 import { getByPath } from "./path";
@@ -28,7 +28,7 @@ function readRawValue(
   }
 
   if (expr.source) {
-    return extractField(input, `${expr.source}:${expr.path}`);
+    return extractFromSource(input, expr.source, expr.path);
   }
 
   // 无来源标签：path 为固定文本

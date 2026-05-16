@@ -3,10 +3,10 @@ import { FieldRefInput } from "@/components/FieldRefInput";
 import { hasAggregateSource } from "@/shared/field-expr";
 import {
   defaultFieldsForRenderer,
+  getRendererDefinition,
   RENDERER_DEFINITIONS,
-  resolveRendererId,
 } from "@/shared/renderer-registry";
-import type { AppConfig, Rule } from "@/shared/types";
+import type { AppConfig, RendererId, Rule } from "@/shared/types";
 
 interface RuleBlockSectionProps {
   rule: Rule;
@@ -23,17 +23,16 @@ export function RuleBlockSection({
   config,
   onUpdate,
 }: RuleBlockSectionProps) {
-  const rid = resolveRendererId(rule.renderer);
-  const rendererDef = RENDERER_DEFINITIONS.find((r) => r.id === rid);
+  const rid = getRendererDefinition(rule.renderer)?.id ?? "card";
+  const rendererDef = getRendererDefinition(rid);
   const fieldKeys = rendererDef?.fields ?? ["title"];
   const ruleHasAggregate = hasAggregateSource(rule.aggregateFrom ?? "");
 
-  const onRendererChange = (renderer: string) => {
-    const resolved = resolveRendererId(renderer);
+  const onRendererChange = (renderer: RendererId) => {
     const hasAgg = hasAggregateSource(rule.aggregateFrom ?? "");
     onUpdate({
-      renderer: resolved,
-      fields: defaultFieldsForRenderer(resolved, hasAgg),
+      renderer,
+      fields: defaultFieldsForRenderer(renderer, hasAgg),
     });
   };
 
@@ -49,7 +48,7 @@ export function RuleBlockSection({
         <select
           className="mt-1 flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
           value={rid}
-          onChange={(e) => onRendererChange(e.target.value)}
+          onChange={(e) => onRendererChange(e.target.value as RendererId)}
         >
           {RENDERER_DEFINITIONS.map((r) => (
             <option key={r.id} value={r.id}>
@@ -74,13 +73,10 @@ export function RuleBlockSection({
           config={config}
           value={rule.aggregateFrom ?? ""}
           onChange={(aggregateFrom) => {
-            const aggregate = hasAggregateSource(aggregateFrom);
+            const isAggregate = hasAggregateSource(aggregateFrom);
             onUpdate({
-              aggregateFrom: aggregate ? aggregateFrom : undefined,
-              aggregate,
-              fields: aggregate
-                ? defaultFieldsForRenderer(rid, true)
-                : defaultFieldsForRenderer(rid, false),
+              aggregateFrom: isAggregate ? aggregateFrom : undefined,
+              fields: defaultFieldsForRenderer(rid, isAggregate),
             });
           }}
           placeholder="data"

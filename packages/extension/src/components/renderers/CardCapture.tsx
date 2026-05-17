@@ -15,9 +15,11 @@ function hasContent(value: unknown): boolean {
 
 interface CardCaptureProps {
   record: CaptureRecord;
+  /** 嵌套在 WarningCapture 内，不再套一层 Card 边框 */
+  embedded?: boolean;
 }
 
-export function CardCapture({ record }: CardCaptureProps) {
+export function CardCapture({ record, embedded = false }: CardCaptureProps) {
   const [expanded, setExpanded] = useState(false);
 
   const title = formatValue(record.data.title);
@@ -31,8 +33,10 @@ export function CardCapture({ record }: CardCaptureProps) {
     if (showExpand) setExpanded((v) => !v);
   };
 
-  return (
-    <Card className="overflow-hidden">
+  const shellClass = embedded ? "overflow-hidden" : undefined;
+
+  const inner = (
+    <>
       <CardHeader
         className={cn("pb-2", showExpand && "cursor-pointer")}
         onClick={toggleExpanded}
@@ -74,6 +78,12 @@ export function CardCapture({ record }: CardCaptureProps) {
           </div>
         </div>
       )}
-    </Card>
+    </>
   );
+
+  if (embedded) {
+    return <div className={shellClass}>{inner}</div>;
+  }
+
+  return <Card className="overflow-hidden">{inner}</Card>;
 }

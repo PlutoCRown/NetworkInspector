@@ -110,6 +110,56 @@ function patchFetch(): void {
   };
 }
 
+/** responseType 非 text 时读 responseText 会抛 InvalidStateError */
+function readXHRResponseBody(xhr: XMLHttpRequest): string | null | Promise<string | null> {
+  const type = xhr.responseType;
+
+  if (type === "" || type === "text") {
+    try {
+      return xhr.responseText || null;
+    } catch {
+      return null;
+    }
+  }
+
+  if (type === "json") {
+    try {
+      const value = xhr.response;
+      if (value == null) return null;
+      return typeof value === "string" ? value : JSON.stringify(value);
+    } catch {
+      return null;
+    }
+  }
+
+  if (type === "arraybuffer") {
+    try {
+      const buf = xhr.response as ArrayBuffer | null;
+      if (!buf) return null;
+      return new TextDecoder().decode(buf);
+    } catch {
+      return null;
+    }
+  }
+
+  if (type === "blob") {
+    const blob = xhr.response as Blob | null;
+    if (!blob) return null;
+    return blob.text().catch(() => null);
+  }
+
+  if (type === "document") {
+    try {
+      const doc = xhr.response as Document | null;
+      return doc?.documentElement?.outerHTML ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
 function patchXHR(): void {
   const XHR = XMLHttpRequest;
   const open = XHR.prototype.open;
@@ -135,15 +185,20 @@ function patchXHR(): void {
     this.addEventListener("load", () => {
       try {
         const fullUrl = new URL(xhr.__niUrl ?? "", window.location.href).href;
-        void bodyToText(body ?? null).then((requestBody) => {
-          sendPayload({
-            url: fullUrl,
-            method: xhr.__niMethod ?? "GET",
-            tabUrl: window.location.href,
-            requestBody,
-            responseBody: xhr.responseText ?? null,
+        void Promise.resolve(readXHRResponseBody(xhr))
+          .then((responseBody) => bodyToText(body ?? null).then((requestBody) => ({ requestBody, responseBody })))
+          .then(({ requestBody, responseBody }) => {
+            sendPayload({
+              url: fullUrl,
+              method: xhr.__niMethod ?? "GET",
+              tabUrl: window.location.href,
+              requestBody,
+              responseBody,
+            });
+          })
+          .catch(() => {
+            /* ignore */
           });
-        });
       } catch {
         /* ignore */
       }

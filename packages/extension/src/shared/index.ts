@@ -30,6 +30,11 @@ export type { Message } from "./app/messages";
 
 export { processCapture, validateRuleGroup } from "./capture/pipeline";
 export { isCaptureError, type CaptureErrorInfo } from "./capture/capture-error";
+export {
+  attachCaptureWarning,
+  isCaptureWarning,
+  type CaptureWarningInfo,
+} from "./capture/capture-warning";
 export { syncActionBadge } from "./capture/badge";
 export { countVisibleCaptures, getVisibleCaptures } from "./capture/visible";
 

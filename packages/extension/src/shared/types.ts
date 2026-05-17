@@ -11,13 +11,16 @@ export type {
 import type { RuleGroup } from "./types/rule";
 import { EXAMPLE_PROCESSORS } from "./field/processor-examples";
 
-/** 匹配成功但提取/过滤失败时的展示信息 */
+/** 捕获失败（无法展示有效卡片） */
 export interface CaptureErrorInfo {
   /** 侧栏折叠时展示的一行摘要 */
   summary: string;
   /** 展开后的完整说明 */
   detail: string;
 }
+
+/** 部分字段提取异常，但卡片仍可展示 */
+export type CaptureWarningInfo = CaptureErrorInfo;
 
 export interface CaptureRecord {
   id: string;
@@ -30,6 +33,7 @@ export interface CaptureRecord {
   rawData: Record<string, unknown>;
   highlight?: { field: string; tone: string };
   error?: CaptureErrorInfo;
+  warning?: CaptureWarningInfo;
 }
 
 export interface RawRequestPayload {

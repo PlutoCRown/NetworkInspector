@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { isCaptureError } from "./capture-error";
+import { isCaptureWarning } from "./capture-warning";
 import { processCapture } from "./pipeline";
 import { DEFAULT_APP_CONFIG } from "../types";
 import type { CaptureRecord, RuleGroup } from "../types";
@@ -136,6 +137,46 @@ describe("processCapture", () => {
     );
     expect(isCaptureError(result)).toBe(true);
     expect(result?.renderer).toBe("error");
+  });
+
+  test("partial field issues yield warning card with rendered data", () => {
+    const group: RuleGroup = {
+      version: 1,
+      id: "g-warn",
+      name: "warn",
+      enabled: true,
+      sites: ["^https://app\\.acme\\.io/"],
+      capture: ["/v1/events"],
+      rules: [
+        {
+          id: "r1",
+          url: "/v1/events",
+          renderer: "card",
+          fields: {
+            title: "[source:json]event",
+            desc: "[source:json]time[processor:missing_proc]",
+            expand: "",
+          },
+        },
+      ],
+    };
+    const result = single(
+      processCapture(
+        group,
+        {
+          url: "https://app.acme.io/v1/events",
+          method: "POST",
+          tabUrl: "https://app.acme.io/",
+          requestBody: JSON.stringify({ event: "page_view", time: 1715929200 }),
+        },
+        CFG,
+      ),
+    );
+    expect(result?.data.title).toBe("page_view");
+    expect(isCaptureError(result)).toBe(false);
+    expect(isCaptureWarning(result!)).toBe(true);
+    expect(result?.renderer).toBe("card");
+    expect(result?.warning?.detail).toContain("missing_proc");
   });
 
   test("aliases page_view title via rule.alias", () => {

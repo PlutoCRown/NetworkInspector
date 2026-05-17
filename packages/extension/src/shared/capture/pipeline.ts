@@ -12,6 +12,7 @@ import {
   buildCaptureErrorRecord,
   hasMeaningfulFieldValue,
 } from "./capture-error";
+import { attachCaptureWarning } from "./capture-warning";
 import { applyAlias, applyFilters, resolveHighlight } from "./post-process";
 import type { AppConfig, CaptureRecord, RawRequestPayload, Rule, RuleGroup } from "../types";
 
@@ -167,7 +168,6 @@ function processSplitCaptures(
   const primaryName = splitEntries[0]![0];
   const primaryArr = arrays[primaryName]!;
   const records: CaptureRecord[] = [];
-  const batchIssues: string[] = [];
 
   for (let i = 0; i < primaryArr.length; i++) {
     const splitContext: SplitContext = {};
@@ -206,8 +206,14 @@ function processSplitCaptures(
           ),
         );
       } else {
-        records.push(record);
-        if (issues.length > 0) batchIssues.push(...issues.map((m) => `#${i + 1} ${m}`));
+        records.push(
+          issues.length > 0
+            ? attachCaptureWarning(
+              record,
+              issues.map((m) => `拆分项 #${i + 1}：${m}`),
+            )
+            : record,
+        );
       }
     }
   }
@@ -215,7 +221,6 @@ function processSplitCaptures(
   if (records.length === 0) {
     return buildCaptureErrorRecord(group, rule, payload, "批量拆分后无有效捕获", [
       `共 ${primaryArr.length} 条拆分结果，均未通过过滤或字段为空。`,
-      ...batchIssues,
     ]);
   }
 
@@ -258,7 +263,9 @@ function processRuleCapture(
     return buildReadFailureRecord(group, rule, payload, data, issues, "字段读取失败");
   }
 
-  if (record) return record;
+  if (record) {
+    return issues.length > 0 ? attachCaptureWarning(record, issues) : record;
+  }
 
   return buildCaptureErrorRecord(group, rule, payload, "无法生成捕获", [
     "未知原因导致 buildSuccessRecord 返回空。",

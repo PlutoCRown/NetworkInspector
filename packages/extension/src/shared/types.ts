@@ -42,7 +42,6 @@ export interface RawRequestPayload {
   tabUrl: string;
   requestHeaders?: Record<string, string>;
   requestBody?: string | null;
-  responseBody?: string | null;
 }
 
 /** 单组 Alias：mapkey 为字段表达式 [alias:mapkey] 的引用 id */

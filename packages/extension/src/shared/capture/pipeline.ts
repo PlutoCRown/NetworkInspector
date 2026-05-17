@@ -237,7 +237,6 @@ function processRuleCapture(
     url: payload.url,
     requestHeaders: payload.requestHeaders,
     requestBody: payload.requestBody,
-    responseBody: payload.responseBody,
   };
 
   if (ruleHasSplits(rule)) {

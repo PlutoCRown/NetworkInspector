@@ -11,25 +11,11 @@ function parseJsonBody(body: string | null | undefined): unknown {
   }
 }
 
-function parseFormBody(body: string | null | undefined): Record<string, string> {
-  if (!body) return {};
-  try {
-    const params = new URLSearchParams(body);
-    const out: Record<string, string> = {};
-    params.forEach((v, k) => {
-      out[k] = v;
-    });
-    return out;
-  } catch {
-    return {};
-  }
-}
-
 export interface ExtractInput {
   url: string;
   requestHeaders?: Record<string, string>;
+  /** 请求体文本；form / urlencoded 已在采集层规范为 JSON 字符串 */
   requestBody?: string | null;
-  responseBody?: string | null;
 }
 
 function parseExtractRef(ref: string): { source: FieldSource; path: string } | null {
@@ -59,17 +45,6 @@ export function extractFromSource(
       const json = parseJsonBody(input.requestBody);
       if (json == null) return null;
       return path ? getByPath(json, path) : json;
-    }
-    case "response": {
-      const json = parseJsonBody(input.responseBody);
-      if (json == null) {
-        return path ? null : (input.responseBody ?? null);
-      }
-      return path ? getByPath(json, path) : json;
-    }
-    case "form-data": {
-      const form = parseFormBody(input.requestBody);
-      return path ? form[path] ?? null : form;
     }
     default:
       return null;

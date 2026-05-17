@@ -15,6 +15,7 @@ import {
 } from "../shared/app/storage";
 import { safeRuntimeSendMessage } from "../shared/util/extension-context";
 import type { AppState } from "../shared/types";
+import { initNetworkMonitor, syncNetworkMonitorGate } from "./network-monitor";
 
 // 点击图标展开 popup，不直接打开侧边栏
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => { });
@@ -76,6 +77,7 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
         if (group) {
           group.enabled = !group.enabled;
           await saveRuleGroups(state.ruleGroups);
+          await syncNetworkMonitorGate();
           await broadcastState(await getState());
         }
         sendResponse({ ok: true });
@@ -84,6 +86,7 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
       case "TOGGLE_CAPTURE_ENABLED": {
         const state = await getState();
         await saveCaptureEnabled(!state.captureEnabled);
+        await syncNetworkMonitorGate();
         await broadcastState(await getState());
         sendResponse({ ok: true });
         break;
@@ -225,5 +228,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     getState().then(broadcastState);
   }
 });
+
+initNetworkMonitor(handleRawRequest);
 
 void getState().then(syncActionBadge);

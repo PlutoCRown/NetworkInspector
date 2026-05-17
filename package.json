@@ -11,6 +11,7 @@
     "test": "bun run --filter @network-inspector/extension test",
     "docs:dev": "bun run --filter @network-inspector/docs dev",
     "docs:build": "bun run --filter @network-inspector/docs build",
-    "docs:preview": "bun run --filter @network-inspector/docs preview"
+    "docs:preview": "bun run --filter @network-inspector/docs preview",
+    "loc": "bun scripts/loc.ts"
   }
 }

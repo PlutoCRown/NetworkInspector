@@ -1,6 +1,6 @@
 import type { FieldSource } from "../types";
 
-const SOURCES: FieldSource[] = ["query", "json", "response", "form-data", "header"];
+const SOURCES: FieldSource[] = ["query", "json", "header"];
 
 export interface FieldExpr {
   source: FieldSource | null;

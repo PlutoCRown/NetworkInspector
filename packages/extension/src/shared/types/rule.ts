@@ -1,4 +1,4 @@
-export type FieldSource = "query" | "json" | "response" | "form-data" | "header";
+export type FieldSource = "query" | "json" | "header";
 
 export type RendererId = "card" | "divider";
 

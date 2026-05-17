@@ -8,6 +8,9 @@
     "dev": "bun run --filter @network-inspector/extension dev",
     "build": "bun run --filter @network-inspector/extension build",
     "typecheck": "bun run --filter @network-inspector/extension typecheck",
-    "test": "bun run --filter @network-inspector/extension test"
+    "test": "bun run --filter @network-inspector/extension test",
+    "docs:dev": "bun run --filter @network-inspector/docs dev",
+    "docs:build": "bun run --filter @network-inspector/docs build",
+    "docs:preview": "bun run --filter @network-inspector/docs preview"
   }
 }

@@ -1,0 +1,17 @@
+{
+  "name": "@network-inspector/docs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync-prd": "node ./scripts/sync-prd.mjs",
+    "predev": "bun run sync-prd",
+    "dev": "vitepress dev",
+    "prebuild": "bun run sync-prd",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.4"
+  }
+}

@@ -36,6 +36,40 @@ function headersToRecord(headers: Headers): Record<string, string> {
   return out;
 }
 
+async function bodyToText(data: BodyInit | null | undefined): Promise<string | null> {
+  if (data == null) return null;
+  if (typeof data === "string") return data;
+  if (data instanceof Blob) return data.text();
+  if (data instanceof ArrayBuffer) return new TextDecoder().decode(data);
+  if (ArrayBuffer.isView(data)) return new TextDecoder().decode(data);
+  if (data instanceof URLSearchParams) return data.toString();
+  if (data instanceof FormData) {
+    const out: Record<string, string> = {};
+    data.forEach((v, k) => {
+      out[k] = typeof v === "string" ? v : "[binary]";
+    });
+    return JSON.stringify(out);
+  }
+  try {
+    return String(data);
+  } catch {
+    return null;
+  }
+}
+
+async function readRequestBody(
+  input: RequestInfo | URL,
+  init: RequestInit | undefined,
+  req: Request,
+): Promise<string | null> {
+  try {
+    if (init?.body != null) return await bodyToText(init.body);
+    return await req.clone().text();
+  } catch {
+    return null;
+  }
+}
+
 function patchFetch(): void {
   const original = window.fetch;
   window.fetch = async function patchedFetch(
@@ -44,27 +78,30 @@ function patchFetch(): void {
   ): Promise<Response> {
     const req =
       input instanceof Request ? input : new Request(input, init);
+    const url = req.url;
+    const method = req.method;
+    const requestHeaders = headersToRecord(req.headers);
+    const requestBody = await readRequestBody(input, init, req);
+
     const response = await original.call(window, input, init);
 
     try {
-      const clone = response.clone();
-      const body = await clone.text();
+      const responseBody = await response.clone().text();
       sendPayload({
-        url: req.url,
-        method: req.method,
+        url,
+        method,
         tabUrl: window.location.href,
-        requestHeaders: headersToRecord(req.headers),
-        requestBody:
-          init?.body != null ? String(init.body) : await req.clone().text().catch(() => null),
-        responseBody: body,
+        requestHeaders,
+        requestBody,
+        responseBody,
       });
     } catch {
       sendPayload({
-        url: req.url,
-        method: req.method,
+        url,
+        method,
         tabUrl: window.location.href,
-        requestHeaders: headersToRecord(req.headers),
-        requestBody: null,
+        requestHeaders,
+        requestBody,
         responseBody: null,
       });
     }
@@ -98,12 +135,14 @@ function patchXHR(): void {
     this.addEventListener("load", () => {
       try {
         const fullUrl = new URL(xhr.__niUrl ?? "", window.location.href).href;
-        sendPayload({
-          url: fullUrl,
-          method: xhr.__niMethod ?? "GET",
-          tabUrl: window.location.href,
-          requestBody: body != null ? String(body) : null,
-          responseBody: xhr.responseText ?? null,
+        void bodyToText(body ?? null).then((requestBody) => {
+          sendPayload({
+            url: fullUrl,
+            method: xhr.__niMethod ?? "GET",
+            tabUrl: window.location.href,
+            requestBody,
+            responseBody: xhr.responseText ?? null,
+          });
         });
       } catch {
         /* ignore */
@@ -114,12 +153,34 @@ function patchXHR(): void {
   };
 }
 
-// Bridge: MAIN world → isolated relay
+/** Segment / analytics.js 常用 sendBeacon 上报，须单独 hook */
+function patchSendBeacon(): void {
+  const original = navigator.sendBeacon.bind(navigator);
+  navigator.sendBeacon = function (
+    url: string | URL,
+    data?: BodyInit | null,
+  ): boolean {
+    try {
+      const fullUrl = new URL(url, window.location.href).href;
+      void bodyToText(data).then((requestBody) => {
+        sendPayload({
+          url: fullUrl,
+          method: "POST",
+          tabUrl: window.location.href,
+          requestBody,
+          responseBody: null,
+        });
+      });
+    } catch {
+      /* ignore */
+    }
+    return original(url, data);
+  };
+}
+
 if (!(window as unknown as Record<string, boolean>)[NI_FLAG]) {
   (window as unknown as Record<string, boolean>)[NI_FLAG] = true;
   patchFetch();
   patchXHR();
+  patchSendBeacon();
 }
-
-// Relay script in isolated world listens via separate file - use chrome.runtime from extension world
-// Content script runs in MAIN per manifest - we need a small isolated relay

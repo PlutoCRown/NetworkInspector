@@ -1,4 +1,3 @@
-import { DEFAULT_RULE_GROUPS } from "../defaults";
 import { normalizeRuleGroup } from "../rule/normalize";
 import {
   DEFAULT_APP_CONFIG,
@@ -20,10 +19,9 @@ export async function loadState(): Promise<AppState> {
     STORAGE_KEYS.config,
   ]);
 
-  let ruleGroups = (result[STORAGE_KEYS.ruleGroups] as RuleGroup[] | undefined) ?? [];
-  if (ruleGroups.length === 0) {
-    ruleGroups = DEFAULT_RULE_GROUPS;
-  }
+  const ruleGroups = (
+    (result[STORAGE_KEYS.ruleGroups] as RuleGroup[] | undefined) ?? []
+  ).map((g) => normalizeRuleGroup(g));
 
   const activeRuleGroupId =
     (result[STORAGE_KEYS.activeRuleGroupId] as string | null) ??
@@ -48,7 +46,7 @@ export async function loadState(): Promise<AppState> {
   });
 
   return {
-    ruleGroups: ruleGroups.map((g) => normalizeRuleGroup(g)),
+    ruleGroups,
     activeRuleGroupId,
     captureEnabled,
     captures,

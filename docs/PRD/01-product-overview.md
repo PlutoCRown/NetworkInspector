@@ -31,7 +31,7 @@
 
 ## 1.5 成功标准
 
-- 默认配置（`packages/presets/example.json`）在匹配站点上可捕获并展示。
+- 用户配置或导入的规则组在匹配站点上可捕获并展示；`packages/presets/example.json` 为示例参考。
 - Import → 启用 → 侧边栏查看闭环可用。
 
 ## 1.6 依赖文档

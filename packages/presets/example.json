@@ -56,6 +56,30 @@
         "douyin.com/.*"
       ],
       "version": 1
+    },
+    {
+      "capture": [
+        "chatgpt\\.com/ces/v1/t"
+      ],
+      "enabled": true,
+      "id": "group-chatgpt-ces",
+      "name": "ChatGPT CES 埋点",
+      "rules": [
+        {
+          "fields": {
+            "title": "[source:json]event",
+            "desc": "[source:json]context.app_name",
+            "expand": "[source:json]properties"
+          },
+          "id": "rule-chatgpt-ces",
+          "renderer": "card",
+          "url": "chatgpt\\.com/ces/v1/t"
+        }
+      ],
+      "sites": [
+        "chatgpt\\.com/.*"
+      ],
+      "version": 1
     }
   ],
   "config": {

@@ -66,7 +66,7 @@ export function AboutSection({ state, importJson }: AboutSectionProps) {
           </Button>
           <Button variant="outline" onClick={importJson.openFilePicker}>
             <FileUp className="h-4 w-4" />
-            导入全部配置
+            导入配置
           </Button>
         </div>
       </div>

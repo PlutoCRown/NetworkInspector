@@ -39,8 +39,8 @@ describe("field-refs", () => {
       customProcessors: { customFn: "(v) => v" },
     };
     const available = configAvailableAfterImport(current, incoming, {
-      processors: false,
-      aliasMaps: false,
+      processorIds: [],
+      aliasMapKeys: [],
     });
     const missing = getMissingFieldRefs([GROUP], available);
     expect(missing.missingProcessors).toContain("customFn");

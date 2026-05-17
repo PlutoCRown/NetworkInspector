@@ -2,10 +2,15 @@ import { extractFromSource } from "./extract";
 import type { ExtractInput } from "./extract";
 import { parseFieldExpr, type FieldExpr } from "./expr";
 import { getByPath } from "../util/path";
-import { applyAliasMap, runProcessors } from "./processors";
+import { applyAliasMap, runProcessorsDetailed } from "./processors";
 import type { AppConfig } from "../types";
 
 export type SplitContext = Record<string, unknown>;
+
+export interface FieldResolveResult {
+  value: unknown;
+  issues: string[];
+}
 
 export function resolveFieldExpr(
   raw: string,
@@ -13,10 +18,31 @@ export function resolveFieldExpr(
   splitContext: SplitContext | null,
   config: AppConfig,
 ): unknown {
+  return resolveFieldExprDetailed(raw, input, splitContext, config).value;
+}
+
+export function resolveFieldExprDetailed(
+  raw: string,
+  input: ExtractInput,
+  splitContext: SplitContext | null,
+  config: AppConfig,
+): FieldResolveResult {
   const expr = parseFieldExpr(raw);
+  const issues: string[] = [];
+
+  if (expr.aliasMap && !(expr.aliasMap in config.aliasMaps)) {
+    issues.push(`Alias 组「${expr.aliasMap}」不存在`);
+  }
+
   const rawValue = readRawValue(expr, input, splitContext);
-  const processed = runProcessors(rawValue, expr.processors, config);
-  return applyAliasMap(processed, expr.aliasMap, config);
+  const { value: processed, issues: procIssues } = runProcessorsDetailed(
+    rawValue,
+    expr.processors,
+    config,
+  );
+  issues.push(...procIssues);
+
+  return { value: applyAliasMap(processed, expr.aliasMap, config), issues };
 }
 
 function readRawValue(

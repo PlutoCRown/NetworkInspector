@@ -1,6 +1,6 @@
 import type { Message } from "../shared/app/messages";
 import { syncActionBadge } from "../shared/capture/badge";
-import { parseAppExportBundle } from "../shared/app/bundle";
+import { parseAppExportBundle, pickBundleImport } from "../shared/app/bundle";
 import { normalizeAppConfig } from "../shared/app/normalize-config";
 import { normalizeRuleGroup } from "../shared/rule/normalize";
 import { processCapture, validateRuleGroup } from "../shared/capture/pipeline";
@@ -162,9 +162,10 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
         }
         const state = await getState();
         const { options } = message;
+        const picked = pickBundleImport(bundle, options);
 
-        if (options.ruleGroups) {
-          for (const raw of bundle.ruleGroups) {
+        if (picked.ruleGroups.length > 0) {
+          for (const raw of picked.ruleGroups) {
             if (!validateRuleGroup(raw)) continue;
             const group = normalizeRuleGroup(raw);
             const idx = state.ruleGroups.findIndex((g) => g.id === group.id);
@@ -175,22 +176,25 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
             }
           }
           await saveRuleGroups(state.ruleGroups);
-          if (bundle.activeRuleGroupId) {
-            const exists = state.ruleGroups.some((g) => g.id === bundle.activeRuleGroupId);
-            if (exists) await saveActiveRuleGroupId(bundle.activeRuleGroupId);
+          if (picked.activeRuleGroupId) {
+            const exists = state.ruleGroups.some((g) => g.id === picked.activeRuleGroupId);
+            if (exists) await saveActiveRuleGroupId(picked.activeRuleGroupId);
           }
         }
 
-        if (options.processors || options.aliasMaps) {
+        if (
+          Object.keys(picked.customProcessors).length > 0 ||
+          Object.keys(picked.aliasMaps).length > 0
+        ) {
           const config = { ...state.config };
-          if (options.processors) {
+          if (Object.keys(picked.customProcessors).length > 0) {
             config.customProcessors = {
               ...config.customProcessors,
-              ...bundle.config.customProcessors,
+              ...picked.customProcessors,
             };
           }
-          if (options.aliasMaps) {
-            config.aliasMaps = { ...config.aliasMaps, ...bundle.config.aliasMaps };
+          if (Object.keys(picked.aliasMaps).length > 0) {
+            config.aliasMaps = { ...config.aliasMaps, ...picked.aliasMaps };
           }
           await saveAppConfig(normalizeAppConfig(config));
         }

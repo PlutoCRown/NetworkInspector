@@ -104,7 +104,6 @@ export function PopupApp() {
 
       {importJson.bundleDialog && importJson.pendingBundle && state && (
         <ImportBundleDialog
-          stats={importJson.bundleDialog}
           bundle={importJson.pendingBundle}
           currentConfig={state.config}
           onCancel={importJson.cancelBundleImport}

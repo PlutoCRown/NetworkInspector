@@ -1,8 +1,17 @@
 import { ruleHasSplits } from "../field/expr";
-import { resolveFieldExpr, resolveSplitArray, type SplitContext } from "../field/resolve";
+import {
+  resolveFieldExprDetailed,
+  resolveSplitArray,
+  type SplitContext,
+} from "../field/resolve";
 import type { ExtractInput } from "../field/extract";
+import { getRendererFields } from "../render/registry";
 import { normalizeRuleGroup } from "../rule/normalize";
 import { matchesAny } from "../util/regex";
+import {
+  buildCaptureErrorRecord,
+  hasMeaningfulFieldValue,
+} from "./capture-error";
 import { applyAlias, applyFilters, resolveHighlight } from "./post-process";
 import type { AppConfig, CaptureRecord, RawRequestPayload, Rule, RuleGroup } from "../types";
 
@@ -37,15 +46,38 @@ function extractFieldsWithConfig(
   input: ExtractInput,
   splitContext: SplitContext | null,
   config: AppConfig,
-): Record<string, unknown> {
+): { data: Record<string, unknown>; issues: string[] } {
   const data: Record<string, unknown> = {};
+  const issues: string[] = [];
   for (const [key, ref] of Object.entries(fields)) {
-    data[key] = resolveFieldExpr(ref, input, splitContext, config);
+    const { value, issues: fieldIssues } = resolveFieldExprDetailed(
+      ref,
+      input,
+      splitContext,
+      config,
+    );
+    data[key] = value;
+    for (const msg of fieldIssues) {
+      issues.push(`字段「${key}」(${ref})：${msg}`);
+    }
   }
-  return data;
+  return { data, issues };
 }
 
-function buildRecord(
+function primaryFieldKey(rendererId: string): string {
+  const keys = getRendererFields(rendererId);
+  return keys[0] ?? "title";
+}
+
+function isEmptyCapture(
+  data: Record<string, unknown>,
+  rendererId: string,
+): boolean {
+  const keys = getRendererFields(rendererId);
+  return !keys.some((k) => hasMeaningfulFieldValue(data[k]));
+}
+
+function buildSuccessRecord(
   group: RuleGroup,
   rule: Rule,
   payload: RawRequestPayload,
@@ -55,7 +87,12 @@ function buildRecord(
   let processed = applyAlias(data, rule.alias);
   const highlight = resolveHighlight(processed, rule.highlights);
   const filtered = applyFilters(processed, rule.filters);
-  if (!filtered.ok) return null;
+  if (!filtered.ok) {
+    return buildCaptureErrorRecord(group, rule, payload, "捕获被过滤规则丢弃", [
+      filtered.reason,
+      "可在规则中调整 filters，或检查请求数据是否符合过滤条件。",
+    ]);
+  }
   processed = filtered.data;
 
   return {
@@ -71,38 +108,118 @@ function buildRecord(
   };
 }
 
+function buildReadFailureRecord(
+  group: RuleGroup,
+  rule: Rule,
+  payload: RawRequestPayload,
+  data: Record<string, unknown>,
+  issues: string[],
+  reason: string,
+): CaptureRecord {
+  const primary = primaryFieldKey(rule.renderer);
+  const primaryVal = data[primary];
+  const summary =
+    issues.length > 0
+      ? issues[0]!
+      : !hasMeaningfulFieldValue(primaryVal)
+        ? `字段「${primary}」读取为空`
+        : reason;
+
+  const detailLines = [
+    reason,
+    ...issues,
+    "",
+    "已解析字段值：",
+    ...Object.entries(data).map(
+      ([k, v]) => `  ${k}: ${v == null ? "（空）" : JSON.stringify(v)}`,
+    ),
+  ];
+
+  return buildCaptureErrorRecord(group, rule, payload, summary, detailLines);
+}
+
 function processSplitCaptures(
   group: RuleGroup,
   rule: Rule,
   payload: RawRequestPayload,
   input: ExtractInput,
   config: AppConfig,
-): CaptureRecord[] | null {
+): CaptureRecord | CaptureRecord[] {
   const splits = rule.splits!;
   const splitEntries = Object.entries(splits);
-  const arrays: Record<string, unknown[]> = {};
 
   for (const [name, expr] of splitEntries) {
     const arr = resolveSplitArray(expr, input);
-    if (!arr?.length) return null;
-    arrays[name] = arr;
+    if (!arr?.length) {
+      return buildCaptureErrorRecord(group, rule, payload, `拆分「${name}」无有效数据`, [
+        `拆分表达式：${expr}`,
+        "来源需解析为非空数组；若为对象/标量，请确认路径是否正确。",
+        "若无需批量拆分，可关闭 splits，改用 [source:json] 直接写字段路径。",
+      ]);
+    }
+  }
+
+  const arrays: Record<string, unknown[]> = {};
+  for (const [name, expr] of splitEntries) {
+    arrays[name] = resolveSplitArray(expr, input)!;
   }
 
   const primaryName = splitEntries[0]![0];
   const primaryArr = arrays[primaryName]!;
   const records: CaptureRecord[] = [];
+  const batchIssues: string[] = [];
 
   for (let i = 0; i < primaryArr.length; i++) {
     const splitContext: SplitContext = {};
     for (const [name, arr] of Object.entries(arrays)) {
       splitContext[name] = arr[i] ?? arr[0];
     }
-    const rawData = extractFieldsWithConfig(rule.fields, input, splitContext, config);
-    const record = buildRecord(group, rule, payload, rawData, rawData);
-    if (record) records.push(record);
+    const { data, issues } = extractFieldsWithConfig(
+      rule.fields,
+      input,
+      splitContext,
+      config,
+    );
+    const record = buildSuccessRecord(group, rule, payload, data, data);
+    if (record) {
+      if (record.error) records.push(record);
+      else if (isEmptyCapture(data, rule.renderer)) {
+        records.push(
+          buildReadFailureRecord(
+            group,
+            rule,
+            payload,
+            data,
+            issues,
+            `拆分项 #${i + 1} 字段均为空`,
+          ),
+        );
+      } else if (issues.length > 0 && !hasMeaningfulFieldValue(data[primaryFieldKey(rule.renderer)])) {
+        records.push(
+          buildReadFailureRecord(
+            group,
+            rule,
+            payload,
+            data,
+            issues,
+            `拆分项 #${i + 1} 读取异常`,
+          ),
+        );
+      } else {
+        records.push(record);
+        if (issues.length > 0) batchIssues.push(...issues.map((m) => `#${i + 1} ${m}`));
+      }
+    }
   }
 
-  return records.length ? records : null;
+  if (records.length === 0) {
+    return buildCaptureErrorRecord(group, rule, payload, "批量拆分后无有效捕获", [
+      `共 ${primaryArr.length} 条拆分结果，均未通过过滤或字段为空。`,
+      ...batchIssues,
+    ]);
+  }
+
+  return records;
 }
 
 function processRuleCapture(
@@ -110,7 +227,7 @@ function processRuleCapture(
   rule: Rule,
   payload: RawRequestPayload,
   config: AppConfig,
-): CaptureRecord | CaptureRecord[] | null {
+): CaptureRecord | CaptureRecord[] {
   const input: ExtractInput = {
     url: payload.url,
     requestHeaders: payload.requestHeaders,
@@ -122,8 +239,31 @@ function processRuleCapture(
     return processSplitCaptures(group, rule, payload, input, config);
   }
 
-  const rawData = extractFieldsWithConfig(rule.fields, input, null, config);
-  return buildRecord(group, rule, payload, rawData, rawData);
+  const { data, issues } = extractFieldsWithConfig(rule.fields, input, null, config);
+  const record = buildSuccessRecord(group, rule, payload, data, data);
+  if (record?.error) return record;
+
+  if (isEmptyCapture(data, rule.renderer)) {
+    return buildReadFailureRecord(
+      group,
+      rule,
+      payload,
+      data,
+      issues,
+      "所有展示字段均为空",
+    );
+  }
+
+  if (issues.length > 0 && !hasMeaningfulFieldValue(data[primaryFieldKey(rule.renderer)])) {
+    return buildReadFailureRecord(group, rule, payload, data, issues, "字段读取失败");
+  }
+
+  if (record) return record;
+
+  return buildCaptureErrorRecord(group, rule, payload, "无法生成捕获", [
+    "未知原因导致 buildSuccessRecord 返回空。",
+    ...issues,
+  ]);
 }
 
 export function processCapture(

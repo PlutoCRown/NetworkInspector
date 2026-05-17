@@ -21,11 +21,58 @@ export interface AppBundleStats {
   aliasMapCount: number;
 }
 
+/** 各数组为空表示不导入该类别；非空则仅导入列出的 ID */
 export interface ImportBundleOptions {
-  ruleGroups: boolean;
-  processors: boolean;
-  aliasMaps: boolean;
+  ruleGroupIds: string[];
+  processorIds: string[];
+  aliasMapKeys: string[];
   overwriteRuleGroups: boolean;
+}
+
+export function pickBundleImport(
+  bundle: AppExportBundle,
+  options: ImportBundleOptions,
+): {
+  ruleGroups: RuleGroup[];
+  customProcessors: AppConfig["customProcessors"];
+  aliasMaps: AppConfig["aliasMaps"];
+  activeRuleGroupId: string | null;
+} {
+  const rgIds = new Set(options.ruleGroupIds);
+  const procIds = new Set(options.processorIds);
+  const aliasKeys = new Set(options.aliasMapKeys);
+
+  const customProcessors: AppConfig["customProcessors"] = {};
+  for (const id of options.processorIds) {
+    const body = bundle.config.customProcessors[id];
+    if (body !== undefined) customProcessors[id] = body;
+  }
+
+  const aliasMaps: AppConfig["aliasMaps"] = {};
+  for (const key of options.aliasMapKeys) {
+    const group = bundle.config.aliasMaps[key];
+    if (group) aliasMaps[key] = group;
+  }
+
+  const activeRuleGroupId =
+    bundle.activeRuleGroupId && rgIds.has(bundle.activeRuleGroupId)
+      ? bundle.activeRuleGroupId
+      : null;
+
+  return {
+    ruleGroups: bundle.ruleGroups.filter((g) => rgIds.has(g.id)),
+    customProcessors,
+    aliasMaps,
+    activeRuleGroupId,
+  };
+}
+
+export function hasBundleImportSelection(options: ImportBundleOptions): boolean {
+  return (
+    options.ruleGroupIds.length > 0 ||
+    options.processorIds.length > 0 ||
+    options.aliasMapKeys.length > 0
+  );
 }
 
 export type ImportDetectResult =

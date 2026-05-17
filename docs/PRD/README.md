@@ -6,7 +6,7 @@
 
 | 文件 | 用途 |
 |------|------|
-| [`packages/presets/example.json`](../../packages/presets/example.json) | 默认规则组 + Processor + Alias（首次安装） |
+| [`packages/presets/example.json`](../../packages/presets/example.json) | 示例规则组 + Processor + Alias（导入参考，扩展首次安装不含规则组） |
 | 单规则组 JSON | 编辑器导出 / Import |
 
 ## 阅读顺序

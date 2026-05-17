@@ -34,7 +34,7 @@ bun run build
 3. 访问已配置站点（默认示例含抖音、A1.art 等），触发匹配请求
 4. 在侧边栏查看捕获卡片
 
-默认规则组与 Processor 在首次安装时由扩展内置配置注入，亦可从编辑器导出/导入 JSON。
+首次安装仅内置 **Processor**（时间、日期、JSONParser 等）；**规则组**需在编辑器新建，或从 Popup / About 导入 `packages/presets/example.json` 中的示例。
 
 ## 配置编辑器
 

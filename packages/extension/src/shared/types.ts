@@ -9,8 +9,15 @@ export type {
 } from "./types/rule";
 
 import type { RuleGroup } from "./types/rule";
-import { DEFAULT_ALIAS_MAPS } from "./defaults";
 import { EXAMPLE_PROCESSORS } from "./field/processor-examples";
+
+/** 匹配成功但提取/过滤失败时的展示信息 */
+export interface CaptureErrorInfo {
+  /** 侧栏折叠时展示的一行摘要 */
+  summary: string;
+  /** 展开后的完整说明 */
+  detail: string;
+}
 
 export interface CaptureRecord {
   id: string;
@@ -22,6 +29,7 @@ export interface CaptureRecord {
   data: Record<string, unknown>;
   rawData: Record<string, unknown>;
   highlight?: { field: string; tone: string };
+  error?: CaptureErrorInfo;
 }
 
 export interface RawRequestPayload {
@@ -51,8 +59,9 @@ export interface AppConfig {
   customProcessors: CustomProcessorConfig;
 }
 
+/** 首次安装时的全局配置：仅内置 Processor，不含规则组 */
 export const DEFAULT_APP_CONFIG: AppConfig = {
-  aliasMaps: { ...DEFAULT_ALIAS_MAPS },
+  aliasMaps: {},
   customProcessors: { ...EXAMPLE_PROCESSORS },
 };
 

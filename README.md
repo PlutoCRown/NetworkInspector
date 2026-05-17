@@ -18,7 +18,7 @@
 - **字段表达式** — `[source:json]`、`[aggregate:item]`、`[processor:id]`、`[alias:mapkey]` 可组合
 - **批量拆分** — `splits` 将单次请求中的数组展开为多条侧边栏记录
 - **可视化配置** — 独立编辑器管理规则组、Processor、Alias；支持 JSON / 全量包导入导出
-- **内置示例** — 首次安装注入默认规则组与常用 Processor（时间格式化、JSON 解析等）
+- **内置 Processor** — 首次安装自带时间格式化、JSON 解析等处理器；规则组需自行配置或从 `example.json` 导入
 
 ## 架构概览
 
@@ -85,7 +85,7 @@ bun run docs:build  # 输出 packages/docs/.vitepress/dist
 
 ## 配置说明
 
-- 默认规则组与 Processor 内置于扩展（见 `packages/extension/src/shared/defaults` 与 `processor-examples.ts`）
+- 默认 Processor 见 `packages/extension/src/shared/field/processor-examples.ts`；示例规则组见 `packages/presets/example.json`（导入用，非内置）
 - 参考示例：`packages/presets/example.json`
 - 字段语法与模型详见 [产品文档](https://plutocrown.github.io/NetworkInspector/prd/)
 

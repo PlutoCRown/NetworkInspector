@@ -49,22 +49,25 @@ export function collectFieldRefIdsFromRuleGroups(groups: RuleGroup[]): FieldRefI
   return { processors: [...processors], aliases: [...aliases] };
 }
 
-/** 导入后实际可用的 Processor / Alias ID */
+/** 导入后实际可用的 Processor / Alias ID（含本次勾选的项） */
 export function configAvailableAfterImport(
   current: AppConfig,
   incoming: AppConfig | null,
-  options: { processors: boolean; aliasMaps: boolean },
+  options: { processorIds: string[]; aliasMapKeys: string[] },
 ): AppConfig {
-  return {
-    customProcessors: {
-      ...current.customProcessors,
-      ...(options.processors && incoming ? incoming.customProcessors : {}),
-    },
-    aliasMaps: {
-      ...current.aliasMaps,
-      ...(options.aliasMaps && incoming ? incoming.aliasMaps : {}),
-    },
-  };
+  const customProcessors = { ...current.customProcessors };
+  const aliasMaps = { ...current.aliasMaps };
+  if (incoming) {
+    for (const id of options.processorIds) {
+      const body = incoming.customProcessors[id];
+      if (body !== undefined) customProcessors[id] = body;
+    }
+    for (const key of options.aliasMapKeys) {
+      const group = incoming.aliasMaps[key];
+      if (group) aliasMaps[key] = group;
+    }
+  }
+  return { customProcessors, aliasMaps };
 }
 
 export function getMissingFieldRefs(

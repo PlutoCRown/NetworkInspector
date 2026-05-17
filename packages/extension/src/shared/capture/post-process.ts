@@ -32,7 +32,7 @@ export function resolveHighlight(
 
 export type FilterResult =
   | { ok: true; data: Record<string, unknown> }
-  | { ok: false; dropped: true };
+  | { ok: false; dropped: true; reason: string };
 
 export function applyFilters(
   data: Record<string, unknown>,
@@ -47,7 +47,11 @@ export function applyFilters(
     if (rule.action === "drop") {
       const at = getByPath(fieldVal, rule.path);
       if (at === rule.equals) {
-        return { ok: false, dropped: true };
+        return {
+          ok: false,
+          dropped: true,
+          reason: `过滤规则丢弃：字段「${rule.field}」路径 ${rule.path || "(根)"} 等于 ${JSON.stringify(rule.equals)}`,
+        };
       }
     }
 

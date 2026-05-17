@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { isCaptureError } from "./capture-error";
 import { processCapture } from "./pipeline";
 import { DEFAULT_APP_CONFIG } from "../types";
 import type { CaptureRecord, RuleGroup } from "../types";
@@ -46,21 +47,95 @@ function single(
 }
 
 describe("processCapture", () => {
-  test("drops event when expand.debug is true", () => {
-    const result = processCapture(
-      TEST_GROUP,
-      {
-        url: "https://app.acme.io/v1/events",
-        method: "POST",
-        tabUrl: "https://app.acme.io/",
-        requestBody: JSON.stringify({
-          event: "page_view",
-          properties: { debug: true },
-        }),
-      },
-      CFG,
+  test("filter drop yields error card", () => {
+    const result = single(
+      processCapture(
+        TEST_GROUP,
+        {
+          url: "https://app.acme.io/v1/events",
+          method: "POST",
+          tabUrl: "https://app.acme.io/",
+          requestBody: JSON.stringify({
+            event: "page_view",
+            properties: { debug: true },
+          }),
+        },
+        CFG,
+      ),
     );
-    expect(result).toBeNull();
+    expect(isCaptureError(result)).toBe(true);
+    expect(result?.error?.summary).toContain("过滤");
+  });
+
+  test("split source failure yields error card", () => {
+    const group: RuleGroup = {
+      version: 1,
+      id: "g-split",
+      name: "split",
+      enabled: true,
+      sites: ["^https://app\\.acme\\.io/"],
+      capture: ["/v1/events"],
+      rules: [
+        {
+          id: "r1",
+          url: "/v1/events",
+          renderer: "card",
+          splits: { item: "[source:json]missing.events" },
+          fields: { title: "[aggregate:item]event", desc: "", expand: "" },
+        },
+      ],
+    };
+    const result = single(
+      processCapture(
+        group,
+        {
+          url: "https://app.acme.io/v1/events",
+          method: "POST",
+          tabUrl: "https://app.acme.io/",
+          requestBody: JSON.stringify({ event: "x" }),
+        },
+        CFG,
+      ),
+    );
+    expect(isCaptureError(result)).toBe(true);
+    expect(result?.error?.summary).toContain("拆分");
+  });
+
+  test("empty fields yield error card", () => {
+    const group: RuleGroup = {
+      version: 1,
+      id: "g-empty",
+      name: "empty",
+      enabled: true,
+      sites: ["^https://app\\.acme\\.io/"],
+      capture: ["/v1/events"],
+      rules: [
+        {
+          id: "r1",
+          url: "/v1/events",
+          renderer: "card",
+          fields: {
+            title: "[source:json]not_here",
+            desc: "[source:json]also_missing",
+            expand: "[source:json]nope",
+          },
+        },
+      ],
+    };
+    const result = single(
+      processCapture(
+        group,
+        {
+          url: "https://app.acme.io/v1/events",
+          method: "POST",
+          tabUrl: "https://app.acme.io/",
+          requestBody: JSON.stringify({ other: 1 }),
+        },
+        CFG,
+      ),
+    );
+    expect(isCaptureError(result)).toBe(true);
+    expect(result?.renderer).toBe("error");
   });
 
   test("aliases page_view title via rule.alias", () => {
@@ -225,5 +300,49 @@ describe("processCapture", () => {
       ),
     );
     expect(result?.data.expand).toEqual({ data: { ok: 1 } });
+  });
+
+  test("chatgpt ces/v1/t track payload (no splits)", () => {
+    const group: RuleGroup = {
+      version: 1,
+      id: "group-chatgpt-ces",
+      name: "ChatGPT CES",
+      enabled: true,
+      sites: ["chatgpt\\.com/.*"],
+      capture: ["chatgpt\\.com/ces/v1/t"],
+      rules: [
+        {
+          id: "rule-chatgpt-ces",
+          url: "chatgpt\\.com/ces/v1/t",
+          renderer: "card",
+          fields: {
+            title: "[source:json]event",
+            desc: "[source:json]context.app_name",
+            expand: "[source:json]properties",
+          },
+        },
+      ],
+    };
+    const body = JSON.stringify({
+      event: "Account Features Loaded",
+      type: "track",
+      properties: { value: 1252, chatgpt_optimized_account_load: true },
+      context: { app_name: "chatgpt", app_version: "bede35f9" },
+    });
+    const result = single(
+      processCapture(
+        group,
+        {
+          url: "https://chatgpt.com/ces/v1/t",
+          method: "POST",
+          tabUrl: "https://chatgpt.com/c/test",
+          requestBody: body,
+        },
+        CFG,
+      ),
+    );
+    expect(result?.data.title).toBe("Account Features Loaded");
+    expect(result?.data.desc).toBe("chatgpt");
+    expect(result?.data.expand).toMatchObject({ value: 1252 });
   });
 });

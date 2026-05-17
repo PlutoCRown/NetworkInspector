@@ -162,7 +162,6 @@ export function EditorApp() {
 
       {importJson.bundleDialog && importJson.pendingBundle && config && (
         <ImportBundleDialog
-          stats={importJson.bundleDialog}
           bundle={importJson.pendingBundle}
           currentConfig={config}
           onCancel={importJson.cancelBundleImport}

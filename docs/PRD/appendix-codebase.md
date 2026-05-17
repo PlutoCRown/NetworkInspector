@@ -26,7 +26,7 @@ shared/              无 UI 的核心逻辑（可独立测试）
   util/              path、regex
 ```
 
-`packages/presets/`：`example.json`（默认规则组 + config）、`renderers.ts`、类型。
+`packages/presets/`：`example.json`（示例规则组 + config，供导入）、`renderers.ts`、类型。扩展内置仅 `processor-examples.ts`（Processor），无内置规则组。
 
 ## 偏长文件（>250 行，建议后续拆分）
 

@@ -1,8 +1,6 @@
 /** 扩展内共享模块入口（按域分子目录，此处聚合常用导出） */
 
 export * from "./types";
-export { DEFAULT_RULE_GROUPS, DEFAULT_ALIAS_MAPS } from "./defaults";
-
 export { APP_NAME, APP_VERSION } from "./app/meta";
 export {
   APP_EXPORT_VERSION,
@@ -31,6 +29,7 @@ export {
 export type { Message } from "./app/messages";
 
 export { processCapture, validateRuleGroup } from "./capture/pipeline";
+export { isCaptureError, type CaptureErrorInfo } from "./capture/capture-error";
 export { syncActionBadge } from "./capture/badge";
 export { countVisibleCaptures, getVisibleCaptures } from "./capture/visible";
 

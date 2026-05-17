@@ -4,8 +4,11 @@ import { fileURLToPath } from "node:url";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const docsPkg = join(root, "..");
-const prdSrc = join(docsPkg, "../../docs/PRD");
+const repoRoot = join(docsPkg, "../..");
+const prdSrc = join(repoRoot, "docs/PRD");
 const prdDest = join(docsPkg, "prd");
+const llmsSrc = join(docsPkg, "llms.txt");
+const publicDir = join(docsPkg, "public");
 
 if (!existsSync(prdSrc)) {
   console.error(`PRD source not found: ${prdSrc}`);
@@ -22,3 +25,12 @@ for (const name of readdirSync(prdSrc)) {
 
 cpSync(join(prdSrc, "README.md"), join(prdDest, "index.md"));
 console.log(`Synced PRD → ${prdDest}`);
+
+if (existsSync(llmsSrc)) {
+  mkdirSync(publicDir, { recursive: true });
+  cpSync(llmsSrc, join(publicDir, "llms.txt"));
+  cpSync(llmsSrc, join(repoRoot, "llms.txt"));
+  console.log("Synced llms.txt → public/ and repo root");
+} else {
+  console.warn(`llms.txt not found: ${llmsSrc}`);
+}

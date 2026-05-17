@@ -8,6 +8,8 @@
 
 **在线文档：** https://plutocrown.github.io/NetworkInspector/
 
+**AI Agent：** 生成规则组 JSON 请先读 [Agent 配置指南](https://plutocrown.github.io/NetworkInspector/guide/for-agents) 或仓库根目录 [`llms.txt`](./llms.txt)。
+
 ---
 
 ## 特性
@@ -68,6 +70,9 @@ bun run docs:build  # 输出 packages/docs/.vitepress/dist
 ```
 
 文档由 [VitePress](https://vitepress.dev/) 构建，通过 GitHub Actions 部署至 GitHub Pages（`base: /NetworkInspector/`）。
+
+- [Agent 配置指南](https://plutocrown.github.io/NetworkInspector/guide/for-agents)（含 DevTools Network 分析流程）
+- [`llms.txt`](./llms.txt) — 供 LLM / Agent 拉取的机器可读摘要
 
 ## 仓库结构
 

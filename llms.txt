@@ -1,0 +1,148 @@
+# NetworkInspector
+
+> Chrome 扩展：按「规则组」捕获网络请求，从请求/响应中提取字段，在侧边栏以卡片展示埋点数据。本文档面向 AI Agent；请优先帮助用户生成**合法可导入的规则组 JSON**。
+
+## 给 AI Agent（必读）
+
+你是来帮用户**写配置**的。默认交付物是：
+
+1. **单个规则组 JSON**（`RuleGroup` 对象）— 可在编辑器导入，或作为 `AppExportBundle.ruleGroups[]` 的一项；
+2. 若用户需要 Processor / Alias，再附带 `config.customProcessors` / `config.aliasMaps` 片段。
+
+生成前请向用户确认：目标站点 URL、要捕获的请求 URL 特征、展示字段（标题/描述/详情）。
+
+### 有视觉能力时：用 Chrome DevTools Network 分析
+
+若你能看到用户屏幕或 DevTools 截图，按此流程操作并指导用户：
+
+1. 打开目标页面，按 `F12` → **Network（网络）** 面板。
+2. 勾选 **Preserve log**；过滤器选 **Fetch/XHR**（或 All）。
+3. 在页面上**重复触发**疑似埋点操作（点击、曝光、翻页等）。
+4. 在列表中找疑似埋点请求，常见特征：
+   - 域名含 `analytics`、`track`、`log`、`collect`、`mcs.`、`sa.`、`sensors.`、`apm.` 等；
+   - Method 多为 `POST`；Payload 为 JSON 或 form；
+   - 响应常为 `204` / 空 / 很短 JSON。
+5. 点开候选请求 → **Headers**：记下 **Request URL**（用于 `capture` / `rules[].url` 正则）。
+6. 点开 **Payload**（或 **Request** 标签）：
+   - POST 上报类埋点 → 字段来自 **请求体** → 使用 `[source:json]路径`（**不要**用 `json` 读响应）。
+   - 仅当数据在响应 body 时才用 `[source:response]路径`。
+7. 分析 JSON **结构**：
+   - 根上是否有 `events`、`list`、`data` 等**数组**？→ 配置 `splits`，如 `{ "item": "[source:json]0.events" }`；
+   - 数组元素里有哪些展示字段（`event`、`action`、`name` 等）？→ 写入 `fields.title` / `desc` / `expand`。
+8. 根据结构写出完整 `RuleGroup` JSON（见下文模板），让用户在扩展 **Popup 导入** 或 **编辑器** 保存。
+
+无视觉时：请用户提供一条真实请求的 **URL**、**Request Payload JSON**（可打码敏感值）、以及希望展示的字段名。
+
+## 安装（给用户）
+
+1. 克隆仓库并构建：`bun install && bun run build`
+2. Chrome 打开 `chrome://extensions` → 开发者模式 → **加载已解压的扩展程序** → 选择 `packages/extension/dist`
+3. 启用 Popup 中的「总开关」，点击「打开侧边栏」验证捕获
+
+预构建安装包若未发布，仅支持开发者模式加载。
+
+## 文档（完整说明）
+
+- Agent 配置指南: https://plutocrown.github.io/NetworkInspector/guide/for-agents
+- 快速开始: https://plutocrown.github.io/NetworkInspector/guide/getting-started
+- 字段表达式: https://plutocrown.github.io/NetworkInspector/guide/field-expressions
+- 规则组模型（PRD）: https://plutocrown.github.io/NetworkInspector/prd/03-rule-group-model
+- 提取与数据来源（PRD）: https://plutocrown.github.io/NetworkInspector/prd/05-extraction
+- 示例配置（仓库）: https://github.com/PlutoCRown/NetworkInspector/blob/main/packages/presets/example.json
+
+## RuleGroup JSON 模板
+
+```json
+{
+  "version": 1,
+  "id": "group-<unique-id>",
+  "name": "<展示名称>",
+  "enabled": true,
+  "sites": ["<页面 URL 正则，如 example\\.com/.*>"],
+  "capture": ["<请求 URL 正则，如 api\\.example\\.com/track>"],
+  "rules": [
+    {
+      "id": "rule-1",
+      "url": "<与 capture 一致的请求 URL 正则>",
+      "renderer": "card",
+      "splits": { "item": "[source:json]<到数组的路径，无数组可省略 splits>" },
+      "fields": {
+        "title": "[aggregate:item]<字段路径>",
+        "desc": "[aggregate:item]<字段路径>",
+        "expand": "[aggregate:item]<字段路径或嵌套对象>"
+      }
+    }
+  ]
+}
+```
+
+## 字段表达式（简表）
+
+| 写法 | 含义 |
+|------|------|
+| `[source:json]a.b` | 请求 body 的 JSON 路径（仅 request） |
+| `[source:response]a.b` | 响应 body |
+| `[aggregate:item]event` | 当前 split 项上的路径（`item` 为 splits 的键名） |
+| `[processor:JSONParser]` | 对当前值运行已配置的 Processor |
+| `[alias:mapkey]` | 别名映射 |
+| 纯文本 | 固定展示文案 |
+
+**禁止 / 已废弃**：`aggregate: true`、`aggregateFrom`、`[scope:item]`。
+
+## splits 行为
+
+- `splits.item` 解析结果为**数组** → 每项一张侧边栏卡片。
+- 解析结果为**非数组** → 当作 **1 条**捕获。
+- 无 `splits` → 整次请求只产生一条捕获（`fields` 用 `[source:json]...` 而非 aggregate）。
+
+## renderer 与 fields 键
+
+| renderer | 必填 fields 键 |
+|----------|----------------|
+| card | title, desc, expand |
+| divider | title |
+
+## 内置 Processor（可选引用）
+
+扩展默认带：`time`、`date`、`datetime`、`JSONParser`。字符串 JSON 字段可加 `[processor:JSONParser]`。
+
+函数体格式：`(value) => { ... }`，保存前须可编译。
+
+## 校验清单（生成后自检）
+
+- [ ] `sites` 能匹配用户当前页 `tabUrl`
+- [ ] `capture` / `rules[].url` 能匹配目标请求 URL（正则中 `.` 等须转义）
+- [ ] POST 埋点使用 `[source:json]`，未误用 response
+- [ ] 批量 events 已配置 `splits` + `[aggregate:item]...`
+- [ ] `renderer` 为 `card` 时含 title、desc、expand
+- [ ] JSON 可被 `JSON.parse` 解析
+
+## 参考示例（抖音批量 events）
+
+```json
+{
+  "version": 1,
+  "id": "group-douyin-demo",
+  "name": "抖音埋点示例",
+  "enabled": true,
+  "sites": ["douyin\\.com/.*"],
+  "capture": ["mcs\\.zijieapi\\.com/list"],
+  "rules": [
+    {
+      "id": "rule-douyin",
+      "url": "mcs\\.zijieapi\\.com/list",
+      "renderer": "card",
+      "splits": { "item": "[source:json]0.events" },
+      "fields": {
+        "title": "[aggregate:item]event",
+        "desc": "[aggregate:item]session_id",
+        "expand": "[aggregate:item]params[processor:JSONParser]"
+      }
+    }
+  ]
+}
+```
+
+## 仓库
+
+- https://github.com/PlutoCRown/NetworkInspector

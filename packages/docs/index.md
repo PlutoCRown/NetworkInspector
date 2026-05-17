@@ -7,11 +7,14 @@ hero:
   tagline: 按规则组捕获请求，在侧边栏以结构化卡片展示埋点数据
   actions:
     - theme: brand
+      text: Agent 配置指南
+      link: /guide/for-agents
+    - theme: alt
       text: 快速开始
       link: /guide/getting-started
     - theme: alt
-      text: 产品文档
-      link: /prd/
+      text: llms.txt
+      link: /llms.txt
 
 features:
   - title: 规则组驱动
@@ -21,6 +24,17 @@ features:
   - title: 可视化编辑
     details: 独立编辑器配置规则组、Processor 与 Alias，支持 JSON 导入导出。
 ---
+
+## 给 AI Agent
+
+::: tip 优先阅读
+如果你是帮助用户**编写捕获规则 JSON** 的 AI Agent，请先阅读：
+
+- **[Agent 配置指南](./guide/for-agents)** — 含 Chrome DevTools Network 分析流程与完整模板
+- **[llms.txt](./llms.txt)** — 机器可读摘要（用途、安装、JSON  schema、校验清单）
+
+**有视觉能力时**：引导用户在 DevTools **Network** 面板筛选 Fetch/XHR，定位疑似埋点请求，查看 **Request Payload** 结构，再按文档生成合法的 `RuleGroup` JSON。
+:::
 
 ## 在线文档
 

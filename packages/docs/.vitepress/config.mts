@@ -14,6 +14,7 @@ export default defineConfig({
   themeConfig: {
     logo: { text: "NetworkInspector" },
     nav: [
+      { text: "Agent 指南", link: "/guide/for-agents" },
       { text: "指南", link: "/guide/getting-started", activeMatch: "/guide/" },
       { text: "产品文档", link: "/prd/", activeMatch: "/prd/" },
       {
@@ -25,6 +26,7 @@ export default defineConfig({
       {
         text: "指南",
         items: [
+          { text: "Agent 配置指南", link: "/guide/for-agents" },
           { text: "快速开始", link: "/guide/getting-started" },
           { text: "字段表达式", link: "/guide/field-expressions" },
           { text: "开发与构建", link: "/guide/development" },
